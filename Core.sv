@@ -74,6 +74,9 @@ module Core (
 		if (can_decode) begin : decode_block
 			// cse502 : Decoder here
 			// remove the following line. It is only here to allow successful compilation in the absence of your code.
+			//if (decode_bytes == 0) ;
+			$display("0x%x ", decode_bytes);
+			bytes_decoded_this_cycle = 4'b1111;
 			if (decode_bytes == 0) ;
 
 			// cse502 : following is an example of how to finish the simulation

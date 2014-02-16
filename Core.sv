@@ -2,6 +2,7 @@ module Core (
 	input[63:0] entry
 ,	/* verilator lint_off UNDRIVEN */ /* verilator lint_off UNUSED */ Sysbus bus /* verilator lint_on UNUSED */ /* verilator lint_on UNDRIVEN */
 );
+	//Decoder D(inst_dump, inst_st);
 	enum { fetch_idle, fetch_waiting, fetch_active } fetch_state;
 	logic[63:0] fetch_rip;
 	logic[0:2*64*8-1] decode_buffer; // NOTE: buffer bits are left-to-right in increasing order
@@ -70,13 +71,27 @@ module Core (
 	endfunction
 
 	logic[3:0] bytes_decoded_this_cycle;
+	wire[7:0] inst_part [15];
+	logic[0:15*8-1] inst_st = decode_bytes;
+	logic[3:0] i;
+	logic[3:0] max_bytes = 15;
+
 	always_comb begin
 		if (can_decode) begin : decode_block
 			// cse502 : Decoder here
 			// remove the following line. It is only here to allow successful compilation in the absence of your code.
 			//if (decode_bytes == 0) ;
-			$display("0x%x ", decode_bytes);
+			$display("\n");
+			$display("Buffer: 0x%x", decode_bytes);
 			bytes_decoded_this_cycle = 4'b1111;
+
+			
+			$display("Offset: %x", decode_offset);
+			for (i = 0 ; i < max_bytes ; i++) begin
+				inst_part[i] = inst_st[i*8 +: 8];
+				$display("Opcode: %x", inst_part[i]);
+			end
+
 			if (decode_bytes == 0) ;
 
 			// cse502 : following is an example of how to finish the simulation
@@ -95,7 +110,6 @@ module Core (
 		end else begin // !bus.reset
 
 			decode_offset <= decode_offset + { 3'b0, bytes_decoded_this_cycle };
-
 		end
 
 endmodule

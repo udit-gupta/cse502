@@ -2,7 +2,7 @@ module Core (
 	input[63:0] entry
 ,	/* verilator lint_off UNDRIVEN */ /* verilator lint_off UNUSED */ Sysbus bus /* verilator lint_on UNUSED */ /* verilator lint_on UNDRIVEN */
 );
-	//Decoder D(inst_dump, inst_st);
+	Decoder D(decode_bytes);
 	enum { fetch_idle, fetch_waiting, fetch_active } fetch_state;
 	logic[63:0] fetch_rip;
 	logic[0:2*64*8-1] decode_buffer; // NOTE: buffer bits are left-to-right in increasing order
@@ -83,8 +83,8 @@ module Core (
 			//if (decode_bytes == 0) ;
 			$display("\n");
 			$display("Buffer: 0x%x", decode_bytes);
-			bytes_decoded_this_cycle = 4'b1111;
-
+			//bytes_decoded_this_cycle = 4'b1111;
+			D.advance(bytes_decoded_this_cycle);
 			
 			$display("Offset: %x", decode_offset);
 			for (i = 0 ; i < max_bytes ; i++) begin

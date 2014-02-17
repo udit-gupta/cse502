@@ -2,12 +2,13 @@ module Core (
 	input[63:0] entry
 ,	/* verilator lint_off UNDRIVEN */ /* verilator lint_off UNUSED */ Sysbus bus /* verilator lint_on UNUSED */ /* verilator lint_on UNDRIVEN */
 );
-	Decoder D(decode_bytes);
 	enum { fetch_idle, fetch_waiting, fetch_active } fetch_state;
 	logic[63:0] fetch_rip;
 	logic[0:2*64*8-1] decode_buffer; // NOTE: buffer bits are left-to-right in increasing order
 	logic[5:0] fetch_skip;
 	logic[6:0] fetch_offset, decode_offset;
+	logic[3:0] byte_incr;
+	Decoder D(byte_incr, bus, decode_bytes);
 
 	function logic mtrr_is_mmio(logic[63:0] physaddr);
 		mtrr_is_mmio = ((physaddr > 640*1024 && physaddr < 1024*1024));
@@ -81,10 +82,15 @@ module Core (
 			// cse502 : Decoder here
 			// remove the following line. It is only here to allow successful compilation in the absence of your code.
 			//if (decode_bytes == 0) ;
+			bytes_decoded_this_cycle = 0;
 			$display("\n");
 			$display("Buffer: 0x%x", decode_bytes);
 			//bytes_decoded_this_cycle = 4'b1111;
-			D.advance(bytes_decoded_this_cycle);
+			D.decode(byte_incr);
+			//D.advance(bytes_decoded_this_cycle);
+			//$display("bytes_decoded_this_cycle : %d", bytes_decoded_this_cycle); 
+			bytes_decoded_this_cycle = byte_incr;
+			$display("bytes_decoded_this_cycle : %d", bytes_decoded_this_cycle); 
 			
 			$display("Offset: %x", decode_offset);
 			for (i = 0 ; i < max_bytes ; i++) begin
@@ -92,7 +98,7 @@ module Core (
 				$display("Opcode: %x", inst_part[i]);
 			end
 
-			if (decode_bytes == 0) ;
+			if (decode_bytes == 0);
 
 			// cse502 : following is an example of how to finish the simulation
 			if (decode_bytes == 0 && fetch_state == fetch_idle) $finish;

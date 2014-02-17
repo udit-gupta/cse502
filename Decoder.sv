@@ -66,7 +66,41 @@ task check_legacy_prefix;
 		endcase
 
 		next_byte_offset = inst_byte_offset + 1;
-		next_field_type = LEGACY_PREFIX;
+		next_field_type = LEGACY_PREFIX | REX_PREFIX;
+	end
+endtask
+
+task check_rex_prefix;
+	output logic[3:0] next_byte_offset;
+	output inst_field_t next_field_type;
+	input logic[3:0] inst_byte_offset;
+	logic[7:0] ibyte;
+	logic [3:0] rex_identifier;
+	logic [3:0] rex_bits;
+
+	begin
+		$display("Byte: 0x%x", buffer[inst_byte_offset*8 +: 8]);
+		ibyte = buffer[inst_byte_offset*8 +: 8];
+		rex_identifier[3:0] = ibyte[7:4];
+		rex_bits[3:0] = ibyte[3:0];
+
+		if (rex_identifier == 4'b0100) begin
+			$display("REX prefix");
+			if (rex_bits[3] == 1'b1)
+				$display("REX: 64 bit operand size");
+			if (rex_bits[2] == 1'b1)
+				$display("REX: Mod R/M reg field");
+			if (rex_bits[1] == 1'b1)
+				$display("REX: SIB extension field present");
+			if (rex_bits[0] == 1'b1)
+				$display("REX: ModR/M or SIB or Opcode reg");
+		end
+		else begin
+			$display("Not a REX prefix");
+		end
+
+		next_byte_offset = inst_byte_offset + 1;
+		next_field_type = REX_PREFIX | OPCODE;
 	end
 endtask
 
@@ -81,6 +115,8 @@ task decode;
 		inst_byte_off = 0;
 		if ((next_fld_type & LEGACY_PREFIX) == LEGACY_PREFIX )
 			check_legacy_prefix(increment_by,next_fld_type,inst_byte_off);
+		if ((next_fld_type & REX_PREFIX) == REX_PREFIX )
+			check_rex_prefix(increment_by,next_fld_type,inst_byte_off+increment_by);
 		byte_incr = increment_by;
 	end
 endtask

@@ -93,6 +93,7 @@ task check_opcode;
 
 	begin
 		inc = 1;
+		$display("string: %s", opc.op[0]);
 		$display("Opcode: 0x%x", buffer[inst_byte_offset*8 +: 8]);	
 		next_byte_offset = inst_byte_offset + inc;
 		next_field_type = OPCODE | MOD_RM;

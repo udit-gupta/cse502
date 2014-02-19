@@ -75,6 +75,7 @@ module Core (
 	logic[3:0] i;
 	logic[3:0] max_bytes = 15;
 	Decoder D(bytes_decoded_this_cycle, bus, decode_bytes);
+	Opcodes opc(bytes_decoded_this_cycle,bus,decode_bytes);
 
 	always_comb begin
 		if (can_decode) begin : decode_block

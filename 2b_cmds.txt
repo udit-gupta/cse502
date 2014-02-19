@@ -1,12 +1,3 @@
-module Opcodes(op);
-
-typedef logic[63:0] mystring;
-output mystring op[0:255];
-
-initial begin
-
-	//opcode mnemonics
-
 op[0] = "ADD";
 op[1] = "ADD";
 op[2] = "ADD";
@@ -45,7 +36,7 @@ op[34] = "AND";
 op[35] = "AND";
 op[36] = "AND";
 op[37] = "AND";
-op[38] = "PFX_ES";
+op[38] = "PFX_SEG_ES";
 op[39] = "DAA";
 op[40] = "SUB";
 op[41] = "SUB";
@@ -53,7 +44,7 @@ op[42] = "SUB";
 op[43] = "SUB";
 op[44] = "SUB";
 op[45] = "SUB";
-op[46] = "PFX_CS";
+op[46] = "PFX_SEG_CS";
 op[47] = "DAS";
 op[48] = "XOR";
 op[49] = "XOR";
@@ -61,7 +52,7 @@ op[50] = "XOR";
 op[51] = "XOR";
 op[52] = "XOR";
 op[53] = "XOR";
-op[54] = "PFX_SS";
+op[54] = "PFX_SEG_SS";
 op[55] = "AAA";
 op[56] = "CMP";
 op[57] = "CMP";
@@ -69,7 +60,7 @@ op[58] = "CMP";
 op[59] = "CMP";
 op[60] = "CMP";
 op[61] = "CMP";
-op[62] = "PFX_DS";
+op[62] = "PFX_SEG_DS";
 op[63] = "AAS";
 op[64] = "REX";
 op[65] = "REX";
@@ -107,10 +98,10 @@ op[96] = "PUSHA";
 op[97] = "POPA";
 op[98] = "BOUND";
 op[99] = "MOVSXD";
-op[100] = "PFX_FS";
-op[101] = "PFX_GS";
-op[102] = "PFX_OP_S";
-op[103] = "PFX_A_S";
+op[100] = "PFX_SEG_FS";
+op[101] = "PFX_SEG_GS";
+op[102] = "PFX_OP_SZ";
+op[103] = "PFX_A_SZ";
 op[104] = "PUSH";
 op[105] = "IMUL";
 op[106] = "PUSH";
@@ -220,7 +211,7 @@ op[209] = "SFT_GRP2";
 op[210] = "SFT_GRP2";
 op[211] = "SFT_GRP2";
 op[212] = "AAM";
-op[213] = " ";
+op[213] = "";
 op[214] = "AAD";
 op[215] = "XLAT";
 op[216] = "ESC";
@@ -248,7 +239,7 @@ op[237] = "IN";
 op[238] = "OUT";
 op[239] = "OUT";
 op[240] = "LOCK";
-op[241] = " ";
+op[241] = "";
 op[242] = "REPNE";
 op[243] = "REPE";
 op[244] = "HLT";
@@ -262,10 +253,4 @@ op[251] = "STI";
 op[252] = "CLD";
 op[253] = "STD";
 op[254] = "INC";
-op[255] = "DEC";
-
-
-if (op[1] == 0);
-end
-
-endmodule
+op[255] = "DEC"

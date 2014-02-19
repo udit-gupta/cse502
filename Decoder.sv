@@ -4,7 +4,9 @@ module Decoder(
 	Sysbus bus
 	/* verilator lint_on UNUSED */ /* verilator lint_on UNDRIVEN */
 	,
-    input logic[0:15*8-1] buffer);
+    input logic[0:15*8-1] buffer,
+	input logic[63:0] op[0:255]
+);
 
 logic[0:15*8-1] buffer;
 
@@ -93,8 +95,8 @@ task check_opcode;
 
 	begin
 		inc = 1;
-		$display("string: %s", opc.op[0]);
 		$display("Opcode: 0x%x", buffer[inst_byte_offset*8 +: 8]);	
+		$display("Opcode: %s", op[buffer[inst_byte_offset*8 +: 8]]);	
 		next_byte_offset = inst_byte_offset + inc;
 		next_field_type = OPCODE | MOD_RM;
 	end

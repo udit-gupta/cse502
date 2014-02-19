@@ -7,8 +7,6 @@ module Core (
 	logic[0:2*64*8-1] decode_buffer; // NOTE: buffer bits are left-to-right in increasing order
 	logic[5:0] fetch_skip;
 	logic[6:0] fetch_offset, decode_offset;
-	logic[3:0] byte_incr;
-	Decoder D(byte_incr, bus, decode_bytes);
 
 	function logic mtrr_is_mmio(logic[63:0] physaddr);
 		mtrr_is_mmio = ((physaddr > 640*1024 && physaddr < 1024*1024));
@@ -76,6 +74,7 @@ module Core (
 	logic[0:15*8-1] inst_st = decode_bytes;
 	logic[3:0] i;
 	logic[3:0] max_bytes = 15;
+	Decoder D(bytes_decoded_this_cycle, bus, decode_bytes);
 
 	always_comb begin
 		if (can_decode) begin : decode_block
@@ -86,10 +85,9 @@ module Core (
 			$display("\n");
 			$display("Buffer: 0x%x", decode_bytes);
 			//bytes_decoded_this_cycle = 4'b1111;
-			D.decode(byte_incr);
+			D.decode(bytes_decoded_this_cycle);
 			//D.advance(bytes_decoded_this_cycle);
 			//$display("bytes_decoded_this_cycle : %d", bytes_decoded_this_cycle); 
-			bytes_decoded_this_cycle = byte_incr;
 			$display("bytes_decoded_this_cycle : %d", bytes_decoded_this_cycle); 
 			
 			$display("Offset: %x", decode_offset);
@@ -98,7 +96,6 @@ module Core (
 				$display("Opcode: %x", inst_part[i]);
 			end
 
-			if (decode_bytes == 0);
 
 			// cse502 : following is an example of how to finish the simulation
 			if (decode_bytes == 0 && fetch_state == fetch_idle) $finish;

@@ -18,9 +18,7 @@ inst_field_t inst_field;
 
 always_comb begin
 	inst_field = LEGACY_PREFIX;
-	//byte_incr = 4'd15;
-	//decode(byte_incr); 
-	if (inst_field == LEGACY_PREFIX);
+	//decode(byte_incr);
 end
 
 task advance;
@@ -37,8 +35,10 @@ task check_legacy_prefix;
 	output logic[3:0] next_byte_offset;
 	output inst_field_t next_field_type;
 	input logic[3:0] inst_byte_offset;
+	logic[3:0] inc;
 
 	begin
+		inc = 4'd1;
 		$display("Byte: 0x%x", buffer[inst_byte_offset*8 +: 8]);
 		case (buffer[inst_byte_offset*8 +: 8])
 			8'hF0: $display("Group 1: lock prefix");
@@ -52,10 +52,13 @@ task check_legacy_prefix;
 			8'h65: $display("Group 2: GS segment override prefix");
 			8'h66: $display("Group 3: operand size override prefix");
 			8'h67: $display("Group 4: address override prefix");
-			default: $display("Not a legacy instruction prefix");
+			default: begin
+				$display("Not a legacy instruction prefix");
+				inc = 4'd0;
+			end
 		endcase
 
-		next_byte_offset = inst_byte_offset + 1;
+		next_byte_offset = inst_byte_offset + inc;
 		next_field_type = LEGACY_PREFIX | REX_PREFIX;
 	end
 endtask
@@ -67,8 +70,10 @@ task check_rex_prefix;
 	logic[7:0] ibyte;
 	logic [3:0] rex_identifier;
 	logic [3:0] rex_bits;
+	logic[3:0] inc;
 
 	begin
+		inc = 4'd1; 
 		$display("Byte: 0x%x", buffer[inst_byte_offset*8 +: 8]);
 		ibyte = buffer[inst_byte_offset*8 +: 8];
 		rex_identifier[3:0] = ibyte[7:4];
@@ -87,12 +92,14 @@ task check_rex_prefix;
 		end
 		else begin
 			$display("Not a REX prefix");
+			inc = 4'd0;
 		end
 
-		next_byte_offset = inst_byte_offset + 1;
+		next_byte_offset = inst_byte_offset + inc;
 		next_field_type = REX_PREFIX | OPCODE;
 	end
 endtask
+
 
 task decode;
 	output logic[3:0] increment_by;

@@ -4,7 +4,7 @@ module Decoder(
 	Sysbus bus
 	/* verilator lint_on UNUSED */ /* verilator lint_on UNDRIVEN */
 	,
-    input logic[0:15*8-1] buffer_stream);
+    input logic[0:15*8-1] buffer);
 
 logic[0:15*8-1] buffer;
 
@@ -19,20 +19,10 @@ inst_field_t inst_field;
 always_comb begin
 	inst_field = LEGACY_PREFIX;
 	//byte_incr = 4'd15;
-	//$display("B: 0x%x", buffer_stream);
 	//decode(byte_incr); 
 	if (inst_field == LEGACY_PREFIX);
-	if (buffer_stream == 0);
 end
 
-always @ (posedge bus.clk) begin
-	if (bus.reset) begin
-		buffer <= 0;
-	end
-	else begin
-		buffer <= buffer_stream;
-	end
-end
 task advance;
 	output logic[3:0] incr;
 

@@ -14,22 +14,6 @@ typedef enum {
 	MOD_RM=3'b100, SIB=3'b101, DISPLACEMENT=3'b110, IMMEDIATE=3'b111
 } inst_field_t; 
 
-inst_field_t inst_field;
-
-always_comb begin
-	inst_field = LEGACY_PREFIX;
-	//decode(byte_incr);
-end
-
-task advance;
-	output logic[3:0] incr;
-
-	begin
-		incr = 15;
-		if (buffer == 0);
-		if (inst_field == 0);
-	end
-endtask
 
 task check_legacy_prefix;
 	output logic[3:0] next_byte_offset;
@@ -101,6 +85,20 @@ task check_rex_prefix;
 endtask
 
 
+task check_opcode;
+	output logic[3:0] next_byte_offset;
+	output inst_field_t next_field_type;
+	input logic[3:0] inst_byte_offset;
+	logic[3:0] inc;
+
+	begin
+		inc = 1;
+		$display("Opcode: 0x%x", buffer[inst_byte_offset*8 +: 8]);	
+		next_byte_offset = inst_byte_offset + inc;
+		next_field_type = OPCODE | MOD_RM;
+	end
+endtask 
+
 task decode;
 	output logic[3:0] increment_by;
 	logic[3:0] inst_byte_off;
@@ -114,6 +112,8 @@ task decode;
 			check_legacy_prefix(increment_by,next_fld_type,inst_byte_off);
 		if ((next_fld_type & REX_PREFIX) == REX_PREFIX )
 			check_rex_prefix(increment_by,next_fld_type,inst_byte_off+increment_by);
+		if ((next_fld_type & OPCODE) == OPCODE )
+			check_opcode(increment_by,next_fld_type,inst_byte_off+increment_by);
 		byte_incr = increment_by;
 	end
 endtask

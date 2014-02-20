@@ -129,9 +129,20 @@ task check_modrm;
 	output inst_field_t next_field_type;
 	input logic[3:0] inst_byte_offset;
 	logic[3:0] inc;
+	logic[7:0] modrm;
 
 	begin
 		inc = 1;
+		modrm=buffer[inst_byte_offset*8 +: 8];
+		if(modrm[7:6] == 2'b11) begin
+			$display("Register Register Addressing (No Memory Operand); REX.X not used");
+		end
+		else begin
+			$display("Memory Addressing without an SIB Byte, REX.X Not Used");
+		end
+		$display("Register Name : %x",{rex_bits[2],modrm[5:3]});
+		
+		if(modrm[2:0] == 0);
 		next_byte_offset = inst_byte_offset + inc;
 		next_field_type = LEGACY_PREFIX;
 	end

@@ -5,7 +5,8 @@ module Decoder(
 	/* verilator lint_on UNUSED */ /* verilator lint_on UNDRIVEN */
 	,
     input logic[0:15*8-1] buffer,
-	input logic[63:0] op[0:255]
+	input logic[63:0] op[0:255],
+	input logic[63:0] op2[0:255]
 );
 
 logic[0:15*8-1] buffer;
@@ -95,11 +96,18 @@ task check_opcode;
 
 	begin
 		inc = 1;
-		$display("Opcode: 0x%x", buffer[inst_byte_offset*8 +: 8]);	
-		$display("Opcode: %s", op[buffer[inst_byte_offset*8 +: 8]]);	
-		next_byte_offset = inst_byte_offset + inc;
+        if (buffer[inst_byte_offset*8 +: 8]==8'h0f) begin
+            inst_byte_offset=inst_byte_offset+1;
+		    $display("Opcode: 0x%x", buffer[inst_byte_offset*8 +: 8]);	
+		    $display("Opcode: %s", op2[buffer[inst_byte_offset*8 +: 8]]);	
+        end
+        else begin 
+		    $display("Opcode: 0x%x", buffer[inst_byte_offset*8 +: 8]);	
+		    $display("Opcode: %s", op[buffer[inst_byte_offset*8 +: 8]]);	
+	    end
+        next_byte_offset = inst_byte_offset + inc;
 		next_field_type = OPCODE | MOD_RM;
-	end
+    end
 endtask 
 
 task decode;

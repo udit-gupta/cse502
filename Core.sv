@@ -77,8 +77,10 @@ module Core (
 
 	typedef logic[63:0] mystring;
 	mystring op[0:255];
+	mystring op2[0:255];
 	Opcodes opc(op);
-	Decoder D(bytes_decoded_this_cycle, bus, decode_bytes,op);
+	Opcodes2 opc2(op2);
+	Decoder D(bytes_decoded_this_cycle, bus, decode_bytes,op,op2);
 
 	always_comb begin
 		if (can_decode) begin : decode_block
@@ -117,6 +119,7 @@ module Core (
 		end else begin // !bus.reset
 
 			decode_offset <= decode_offset + { 3'b0, bytes_decoded_this_cycle };
+			$display(" < ---------------------------------------------------------------------------------------------- > ");
 		end
 
 endmodule

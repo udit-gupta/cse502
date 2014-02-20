@@ -142,9 +142,33 @@ task check_modrm;
 		end
 		$display("Register Name : %x",{rex_bits[2],modrm[5:3]});
 		
-		if(modrm[2:0] == 0);
+		if(modrm[2:0] == 3'b100) begin
+				next_field_type = SIB;
+				$display("/hello1");
+		end
+		else begin
+				next_field_type = LEGACY_PREFIX;
+				$display("/hello2");
+		end
+
+		$display("/hello3");
 		next_byte_offset = inst_byte_offset + inc;
+	end
+endtask
+
+
+task check_sib;
+	output logic[3:0] next_byte_offset;
+	output inst_field_t next_field_type;
+	input logic[3:0] inst_byte_offset;
+	logic[3:0] inc;
+
+	begin
+		inc = 1;
+		$display("check sib");
+        next_byte_offset = inst_byte_offset + inc;
 		next_field_type = LEGACY_PREFIX;
+		$display("Next Byte Offset: %d , Inst_byte_offset: %d, inc:%d ",next_byte_offset,inst_byte_offset,inc);
 	end
 endtask
 
@@ -155,6 +179,8 @@ task decode;
 	logic[3:0] offs3;
 	logic[3:0] offs4;
 	logic[3:0] offs5;
+	logic[3:0] offs6;
+	logic[3:0] offs7;
 	inst_field_t next_fld_type;
 
 	begin
@@ -180,9 +206,17 @@ task decode;
 
 		if ((next_fld_type & MOD_RM) == MOD_RM ) begin
 			check_modrm(offs5,next_fld_type,offs4);
+			offs7=offs5;
 		end
 
-		increment_by = offs5;
+		if ((next_fld_type & SIB) == SIB ) begin
+			$display("First run");
+			check_sib(offs6,next_fld_type,offs5);
+			$display("Second run");
+			offs7=offs6;
+		end
+		
+		increment_by = offs7;
 		byte_incr = increment_by;
 	end
 endtask

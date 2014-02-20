@@ -13,6 +13,8 @@ module Decoder(
 
 logic[0:15*8-1] buffer;
 logic [3:0] rex_bits;
+logic[7:0] modrm;
+//logic [0:0] RR_addr;
 logic [0:0] RM;
 
 typedef enum {
@@ -129,29 +131,27 @@ task check_modrm;
 	output inst_field_t next_field_type;
 	input logic[3:0] inst_byte_offset;
 	logic[3:0] inc;
-	logic[7:0] modrm;
 
 	begin
 		inc = 1;
 		modrm=buffer[inst_byte_offset*8 +: 8];
 		if(modrm[7:6] == 2'b11) begin
 			$display("Register Register Addressing (No Memory Operand); REX.X not used");
+			//RR_addr[0] = 1'b1;
 		end
 		else begin
 			$display("Memory Addressing without an SIB Byte, REX.X Not Used");
+			//RR_addr[0] = 1'b0;
 		end
 		$display("Register Name : %x",{rex_bits[2],modrm[5:3]});
 		
 		if(modrm[2:0] == 3'b100) begin
 				next_field_type = SIB;
-				$display("/hello1");
 		end
 		else begin
 				next_field_type = LEGACY_PREFIX;
-				$display("/hello2");
 		end
 
-		$display("/hello3");
 		next_byte_offset = inst_byte_offset + inc;
 	end
 endtask
@@ -162,13 +162,99 @@ task check_sib;
 	output inst_field_t next_field_type;
 	input logic[3:0] inst_byte_offset;
 	logic[3:0] inc;
+	logic[7:0] sib;
+	logic[1:0] scale;
+	logic[3:0] index;
+	logic[3:0] base;
+	logic[2:0] num_disp_bytes;
+	logic[31:0] disp;
+	logic[31:0] scale_factor;
+	logic[31:0] byte_off;
 
 	begin
 		inc = 1;
-		$display("check sib");
+		byte_off[31:0]={28'b0,inst_byte_offset};
+		sib = buffer[inst_byte_offset*8 +: 8];
+		inc = inc + 1;
+
+		scale[1:0] = (1 << sib[7:6]);
+		index[3:0] = {rex_bits[1], sib[5:3]};
+		base[3:0] = {rex_bits[0], sib[2:0]};
+			
+		$display("scale: b%b", scale);
+		$display("index: b%b", index);
+		$display("base : b%b", base);
+
+
+		if (modrm[7:6] == 2'b00 ) begin
+			if (index[3:0] == 4'b0100 ) begin
+				if (base[2:0] == 3'b101 ) begin
+					num_disp_bytes[2:0] = 3'b100;
+					disp[31:0] = buffer[(byte_off+32'b1)*8 +: 32]; 
+					scale_factor = disp[31:0]; 
+					inc = inc + num_disp_bytes;
+				end
+				else begin
+					num_disp_bytes[2:0] = 3'b000;
+					disp[31:0] = 0; 
+					scale_factor[31:0] = {29'b0,base[2:0]}; 
+					inc = inc + num_disp_bytes;
+				end
+			end
+			else begin
+				if (base[2:0] == 3'b101 ) begin
+					num_disp_bytes[2:0] = 3'b100;
+					disp[31:0] = buffer[(byte_off+32'b1)*8 +: 32]; 
+					scale_factor[31:0] = (index[2:0] * scale[1:0]) + disp[31:0]; 
+					inc = inc + num_disp_bytes;
+				end
+				else begin
+					num_disp_bytes[2:0] = 3'b000;
+					disp[31:0] = 32'b0; 
+					scale_factor[31:0] = (index[2:0] * scale[1:0]) + {29'b0,base[2:0]}; 
+					inc = inc + num_disp_bytes;
+				end
+			end
+		end 
+		else if (modrm[7:6] == 2'b01 ) begin
+			if (index[3:0] == 4'b0100 ) begin
+				num_disp_bytes[2:0] = 3'b001;
+				disp[31:0] = {24'b0, buffer[(byte_off+32'b1)*8 +: 8]}; 
+				scale_factor[31:0] = disp[31:0] + {29'b0,base[2:0]}; 
+				inc = inc + num_disp_bytes;
+			end
+			else begin
+				num_disp_bytes[2:0] = 3'b001;
+				disp[31:0] = {24'b0, buffer[(byte_off+32'b1)*8 +: 8]}; 
+				scale_factor[31:0] = disp[31:0] + {29'b0,base[2:0]} +(index[2:0] * scale[1:0]) ; 
+				inc = inc + num_disp_bytes;
+			end
+		end
+		else if (modrm[7:6] == 2'b10 ) begin
+			if (index[3:0] == 4'b0100 ) begin
+				num_disp_bytes[2:0] = 3'b100;
+				disp[31:0] = buffer[(byte_off+1)*8 +: 32]; 
+				scale_factor[31:0] = disp[31:0] + {29'b0,base[2:0]}; 
+				inc = inc + num_disp_bytes;
+			end
+			else begin
+				num_disp_bytes[2:0] = 3'b100;
+				disp[31:0] = buffer[(byte_off+1)*8 +: 32]; 
+				scale_factor[31:0] = disp[31:0] + {29'b0,base[2:0]} + (index[2:0] * scale[1:0]) ; 
+				inc = inc + num_disp_bytes;
+			end
+		end 
+		else begin
+
+		end
+
+
+		if (scale_factor == 0);
+
         next_byte_offset = inst_byte_offset + inc;
 		next_field_type = LEGACY_PREFIX;
 		$display("Next Byte Offset: %d , Inst_byte_offset: %d, inc:%d ",next_byte_offset,inst_byte_offset,inc);
+		$display("Scale factor: 0x%x", scale_factor[31:0]);
 	end
 endtask
 
@@ -206,14 +292,12 @@ task decode;
 
 		if ((next_fld_type & MOD_RM) == MOD_RM ) begin
 			check_modrm(offs5,next_fld_type,offs4);
-			offs7=offs5;
+			offs7 = offs5;
 		end
 
 		if ((next_fld_type & SIB) == SIB ) begin
-			$display("First run");
 			check_sib(offs6,next_fld_type,offs5);
-			$display("Second run");
-			offs7=offs6;
+			offs7 = offs6;
 		end
 		
 		increment_by = offs7;

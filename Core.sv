@@ -70,39 +70,29 @@ module Core (
 	endfunction
 
 	logic[3:0] bytes_decoded_this_cycle;
-	wire[7:0] inst_part [15];
-	logic[0:15*8-1] inst_st = decode_bytes;
-	logic[3:0] i;
-	logic[3:0] max_bytes = 15;
 
 	typedef logic[63:0] mystring;
 	mystring op[0:255];
 	mystring op2[0:255];
-	Opcodes opc(op);
-	Opcodes2 opc2(op2);
-	Decoder D(bytes_decoded_this_cycle, bus, decode_bytes,op,op2);
+	logic [255:0] ModRM;
+	logic [255:0] ModRM2;
+	Opcodes opc(op,ModRM);
+	Opcodes2 opc2(op2,ModRM2);
+	Decoder D(bytes_decoded_this_cycle, bus, decode_bytes,op,op2,ModRM,ModRM2);
 
 	always_comb begin
 		if (can_decode) begin : decode_block
 			// cse502 : Decoder here
 			// remove the following line. It is only here to allow successful compilation in the absence of your code.
-			//if (decode_bytes == 0) ;
+			if (decode_bytes == 0) ;
 			bytes_decoded_this_cycle = 0;
 			$display("\n");
-			$display("Buffer: 0x%x", decode_bytes);
+			$display("Buffer =>: 0x%x", decode_bytes);
 			//bytes_decoded_this_cycle = 4'b1111;
 			D.decode(bytes_decoded_this_cycle);
-			//D.advance(bytes_decoded_this_cycle);
-			//$display("bytes_decoded_this_cycle : %d", bytes_decoded_this_cycle); 
+			$display("bytes_decoded_this_cycle : %d", bytes_decoded_this_cycle); 
 			$display("bytes_decoded_this_cycle : %d", bytes_decoded_this_cycle); 
 			
-			$display("Offset: %x", decode_offset);
-			for (i = 0 ; i < max_bytes ; i++) begin
-				inst_part[i] = inst_st[i*8 +: 8];
-				$display("Opcode: %x", inst_part[i]);
-			end
-
-
 			// cse502 : following is an example of how to finish the simulation
 			if (decode_bytes == 0 && fetch_state == fetch_idle) $finish;
 		end else begin
@@ -119,6 +109,8 @@ module Core (
 		end else begin // !bus.reset
 
 			decode_offset <= decode_offset + { 3'b0, bytes_decoded_this_cycle };
+			$display("Buffer =>: 0x%x", decode_bytes);
+			$display("Offset after: %x", decode_offset);
 			$display(" < ---------------------------------------------------------------------------------------------- > ");
 		end
 

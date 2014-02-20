@@ -1,6 +1,7 @@
-module Opcodes2(op2);
+module Opcodes2(op2,ModRM2);
 typedef logic[63:0] mystring;
 output mystring op2[0:255];
+output logic[255:0] ModRM2 = 256'b0;
 
 initial begin
 

@@ -6,10 +6,14 @@ module Decoder(
 	,
     input logic[0:15*8-1] buffer,
 	input logic[63:0] op[0:255],
-	input logic[63:0] op2[0:255]
+	input logic[63:0] op2[0:255],
+	input logic[255:0] ModRM,
+	input logic[255:0] ModRM2
 );
 
 logic[0:15*8-1] buffer;
+logic [3:0] rex_bits;
+logic [0:0] RM;
 
 typedef enum {
 	UNDEFINED=3'b000,
@@ -46,7 +50,7 @@ task check_legacy_prefix;
 		endcase
 
 		next_byte_offset = inst_byte_offset + inc;
-		next_field_type = LEGACY_PREFIX | REX_PREFIX;
+		next_field_type = REX_PREFIX;
 	end
 endtask
 
@@ -56,7 +60,6 @@ task check_rex_prefix;
 	input logic[3:0] inst_byte_offset;
 	logic[7:0] ibyte;
 	logic [3:0] rex_identifier;
-	logic [3:0] rex_bits;
 	logic[3:0] inc;
 
 	begin
@@ -83,7 +86,7 @@ task check_rex_prefix;
 		end
 
 		next_byte_offset = inst_byte_offset + inc;
-		next_field_type = REX_PREFIX | OPCODE;
+		next_field_type = OPCODE;
 	end
 endtask
 
@@ -98,33 +101,77 @@ task check_opcode;
 		inc = 1;
         if (buffer[inst_byte_offset*8 +: 8]==8'h0f) begin
             inst_byte_offset=inst_byte_offset+1;
-		    $display("Opcode: 0x%x", buffer[inst_byte_offset*8 +: 8]);	
-		    $display("Opcode: %s", op2[buffer[inst_byte_offset*8 +: 8]]);	
+			inc = inc + 1;
+		    $display("Opcode 2: 0x%x", buffer[inst_byte_offset*8 +: 8]);	
+		    $display("Opcode 2: %s", op2[buffer[inst_byte_offset*8 +: 8]]);	
+			RM = ModRM2[255-buffer[inst_byte_offset*8 +: 8]];
         end
         else begin 
-		    $display("Opcode: 0x%x", buffer[inst_byte_offset*8 +: 8]);	
-		    $display("Opcode: %s", op[buffer[inst_byte_offset*8 +: 8]]);	
+		    $display("Opcode 1: 0x%x", buffer[inst_byte_offset*8 +: 8]);	
+		    $display("Opcode 1: %s", op[buffer[inst_byte_offset*8 +: 8]]);	
+			RM = ModRM[255-buffer[inst_byte_offset*8 +: 8]];
 	    end
+		if (RM) begin
+			$display("ModRM present");
+			next_field_type = MOD_RM;
+		end
+		else begin
+			$display("ModRM absent");
+			next_field_type = LEGACY_PREFIX;
+		end
         next_byte_offset = inst_byte_offset + inc;
-		next_field_type = OPCODE | MOD_RM;
     end
 endtask 
 
+
+task check_modrm;
+	output logic[3:0] next_byte_offset;
+	output inst_field_t next_field_type;
+	input logic[3:0] inst_byte_offset;
+	logic[3:0] inc;
+
+	begin
+		inc = 1;
+		next_byte_offset = inst_byte_offset + inc;
+		next_field_type = LEGACY_PREFIX;
+	end
+endtask
+
 task decode;
 	output logic[3:0] increment_by;
-	logic[3:0] inst_byte_off;
+	logic[3:0] offs;
+	logic[3:0] offs2;
+	logic[3:0] offs3;
+	logic[3:0] offs4;
+	logic[3:0] offs5;
 	inst_field_t next_fld_type;
 
 	begin
-		increment_by = 0;
 		next_fld_type = LEGACY_PREFIX;
-		inst_byte_off = 0;
-		if ((next_fld_type & LEGACY_PREFIX) == LEGACY_PREFIX )
-			check_legacy_prefix(increment_by,next_fld_type,inst_byte_off);
-		if ((next_fld_type & REX_PREFIX) == REX_PREFIX )
-			check_rex_prefix(increment_by,next_fld_type,inst_byte_off+increment_by);
-		if ((next_fld_type & OPCODE) == OPCODE )
-			check_opcode(increment_by,next_fld_type,inst_byte_off+increment_by);
+//		if ((next_fld_type & LEGACY_PREFIX) == LEGACY_PREFIX )
+//			check_legacy_prefix(increment_by,next_fld_type,inst_byte_off);
+//		if ((next_fld_type & REX_PREFIX) == REX_PREFIX )
+//			check_rex_prefix(increment_by,next_fld_type,inst_byte_off+increment_by);
+//		if ((next_fld_type & OPCODE) == OPCODE )
+//			check_opcode(increment_by,next_fld_type,inst_byte_off+increment_by);	
+		offs = 0;
+		if ((next_fld_type & LEGACY_PREFIX) == LEGACY_PREFIX ) begin
+			check_legacy_prefix(offs2,next_fld_type,offs);
+		end
+
+		if ((next_fld_type & REX_PREFIX) == REX_PREFIX ) begin
+			check_rex_prefix(offs3,next_fld_type,offs2);
+		end
+
+		if ((next_fld_type & OPCODE) == OPCODE ) begin
+			check_opcode(offs4,next_fld_type,offs3);
+		end
+
+		if ((next_fld_type & MOD_RM) == MOD_RM ) begin
+			check_modrm(offs5,next_fld_type,offs4);
+		end
+
+		increment_by = offs5;
 		byte_incr = increment_by;
 	end
 endtask

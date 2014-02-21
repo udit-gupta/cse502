@@ -7,6 +7,7 @@ module Core (
 	logic[0:2*64*8-1] decode_buffer; // NOTE: buffer bits are left-to-right in increasing order
 	logic[5:0] fetch_skip;
 	logic[6:0] fetch_offset, decode_offset;
+	logic[63:0] current_addr = entry[63:0];
 
 	function logic mtrr_is_mmio(logic[63:0] physaddr);
 		mtrr_is_mmio = ((physaddr > 640*1024 && physaddr < 1024*1024));
@@ -80,7 +81,7 @@ module Core (
 	logic[255:0] mnemonic_stream;
 	Opcodes opc(op,ModRM);
 	Opcodes2 opc2(op2,ModRM2);
-	Decoder D(bytes_decoded_this_cycle, bus, opcode_stream, mnemonic_stream,decode_bytes,op,op2,ModRM,ModRM2);
+	Decoder D(bytes_decoded_this_cycle, bus, opcode_stream, mnemonic_stream, current_addr, decode_bytes,op,op2,ModRM,ModRM2);
 
 	always_comb begin
 		if (can_decode) begin : decode_block
@@ -107,15 +108,17 @@ module Core (
 
 			decode_offset <= 0;
 			decode_buffer <= 0;
+			current_addr <= entry;
 
 		end else begin // !bus.reset
 
 			decode_offset <= decode_offset + { 3'b0, bytes_decoded_this_cycle };
+			current_addr <= current_addr + { 60'b0, bytes_decoded_this_cycle };
 //			$display("Buffer =>: 0x%x", decode_bytes);
 //			$display("Offset after: %x", decode_offset);
 //			$display(" < ---------------------------------------------------------------------------------------------- > ");
 				
-			$display("%s %s", opcode_stream[191:0],mnemonic_stream[255:0]); 
+			$display("%x: %s %s", current_addr[63:0], opcode_stream[191:0],mnemonic_stream[255:0]); 
 		end
 
 endmodule

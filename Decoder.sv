@@ -125,7 +125,7 @@ task check_opcode;
 			optr = optr + 3;
 			toascii(out2,buffer[inst_byte_offset*8 +: 8]);	
 			opcode_stream[191-optr*8 -: 16] = out2; 
-			mnemonic_stream[optr*8 +: 64] = op2[buffer[inst_byte_offset*8 +: 8]] ;
+			mnemonic_stream[255-mptr*8 -: 64] = op2[buffer[inst_byte_offset*8 +: 8]] ;
 			optr = optr + 3;
 			mptr = mptr + 8;
 			RM = ModRM2[255-buffer[inst_byte_offset*8 +: 8]];
@@ -136,7 +136,7 @@ task check_opcode;
 			instr[7:0] = buffer[inst_byte_offset*8 +: 8];
 			toascii(out1,buffer[inst_byte_offset*8 +: 8]);	
 			opcode_stream[191-optr*8 -: 16] = out1;
-			mnemonic_stream[optr*8 +: 64] = op[buffer[inst_byte_offset*8 +: 8]] ;
+			mnemonic_stream[255-mptr*8 -: 64] = op[buffer[inst_byte_offset*8 +: 8]] ;
 			optr = optr + 3;
 			mptr = mptr + 8;
 			RM = ModRM[255-buffer[inst_byte_offset*8 +: 8]];
@@ -376,21 +376,66 @@ task decode_instr;
 			8'h4d: ;
 			8'h4e: ;
 			8'h4f: ;
-			8'h50: ;
-			8'h51: ;
-			8'h52: ;
-			8'h53: ;
-			8'h54: ;
-			8'h55: ;
-			8'h56: ;
-			8'h57: ;
-			8'h58: ;
-			8'h59: ;
-			8'h5a: ;
-			8'h5b: ;
-			8'h5c: ;
-			8'h5d: ;
-			8'h5e: ;
+			8'h50: 
+					begin
+						mnemonic_stream[255-mptr*8 -: 40] = " %rax"; 
+					end		
+			8'h51: 
+					begin
+						mnemonic_stream[255-mptr*8 -: 40] = " %rcx"; 
+					end		
+			8'h52:
+					begin
+						mnemonic_stream[255-mptr*8 -: 40] = " %rdx"; 
+					end		
+			8'h53: 
+					begin
+						mnemonic_stream[255-mptr*8 -: 40] = " %rbx"; 
+					end		
+			8'h54:
+					begin
+						mnemonic_stream[255-mptr*8 -: 40] = " %rsp"; 
+					end		
+			8'h55:  
+					begin
+						mnemonic_stream[255-mptr*8 -: 40] = " %rbp"; 
+					end		
+			8'h56:
+					begin
+						mnemonic_stream[255-mptr*8 -: 40] = " %rsi"; 
+					end		
+			8'h57: 
+					begin
+						mnemonic_stream[255-mptr*8 -: 40] = " %rdi"; 
+					end		
+			8'h58: 
+					begin
+						mnemonic_stream[255-mptr*8 -: 40] = " %rcx"; 
+					end		
+			8'h59:
+					begin
+						mnemonic_stream[255-mptr*8 -: 40] = " %rdx"; 
+					end		
+			8'h5a: 
+					begin
+						mnemonic_stream[255-mptr*8 -: 40] = " %rbx"; 
+					end		
+			8'h5b:
+					begin
+						mnemonic_stream[255-mptr*8 -: 40] = " %rsp"; 
+					end		
+			8'h5c:  
+					begin
+						mnemonic_stream[255-mptr*8 -: 40] = " %rbp"; 
+					end		
+			8'h5d:
+					begin
+						mnemonic_stream[255-mptr*8 -: 40] = " %rsi"; 
+					end		
+			8'h5e: 
+					begin
+						mnemonic_stream[255-mptr*8 -: 40] = " %rdi"; 
+					end		
 			8'h5f: ;
 			8'h60: ;
 			8'h61: ;
@@ -440,7 +485,7 @@ task decode_instr;
 			8'h8d: ;
 			8'h8e: ;
 			8'h8f: ;
-			8'h90: ;
+/* NOP */	8'h90: ;
 			8'h91: ;
 			8'h92: ;
 			8'h93: ;
@@ -491,7 +536,7 @@ task decode_instr;
 			8'hc0: ;
 			8'hc1: ;
 			8'hc2: ;
-			8'hc3: ;
+/* retq */  8'hc3: ;
 			8'hc4: ;
 			8'hc5: ;
 			8'hc6: ;

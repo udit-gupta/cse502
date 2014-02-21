@@ -118,7 +118,7 @@ module Core (
 //			$display("Offset after: %x", decode_offset);
 //			$display(" < ---------------------------------------------------------------------------------------------- > ");
 				
-			$display("%s %s", opcode_stream[191:0],mnemonic_stream[255:0]); 
+			$display("%x: %s %s", current_addr[63:0], opcode_stream[191:0],mnemonic_stream[255:0]); 
 		end
 
 endmodule

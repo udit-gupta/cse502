@@ -297,7 +297,7 @@ task check_sib;
 endtask
 
 task decode_instr;
-
+	logic [63:0] imm;
 	begin
 		case (instr[7:0])
 			8'h00: ;
@@ -462,94 +462,167 @@ task decode_instr;
 						mnemonic_stream[255-mptr*8 -: 8] = "O";
 						mptr = mptr + 1;
 						mptr = mptr + 1;
-						mnemonic_stream[255-mptr*8 -: 64] = current_addr[63:0] + 64'd4;
+						imm[63:0] = current_addr[63:0] + 64'd4;
+						for (int i=8 ; i> 0 ; i--) begin
+							toascii(mnemonic_stream[255-mptr*8 -: 16],imm[8*i-1 -: 8]);
+							mptr = mptr + 2;
+						end
 					end		
 			8'h71:
 					begin
 						mnemonic_stream[255-mptr*8 -: 16] = "NO";
 						mptr = mptr + 2;
 						mptr = mptr + 1;
-						mnemonic_stream[255-mptr*8 -: 64] = current_addr[63:0] + 64'd4;
+						imm[63:0] = current_addr[63:0] + 64'd4;
+						for (int i=8 ; i> 0 ; i--) begin
+							toascii(mnemonic_stream[255-mptr*8 -: 16],imm[8*i-1 -: 8]);
+							mptr = mptr + 2;
+						end
 					end		
 			8'h72: 
 					begin
 						mnemonic_stream[255-mptr*8 -: 24] = "NAE";
 						mptr = mptr + 3;
 						mptr = mptr + 1;
-						mnemonic_stream[255-mptr*8 -: 64] = current_addr[63:0] + 64'd4;
+						imm[63:0] = current_addr[63:0] + 64'd4;
+						for (int i=8 ; i> 0 ; i--) begin
+							toascii(mnemonic_stream[255-mptr*8 -: 16],imm[8*i-1 -: 8]);
+							mptr = mptr + 2;
+						end
 					end		
 			8'h73: 
 					begin
 						mnemonic_stream[255-mptr*8 -: 16] = "AE";
 						mptr = mptr + 2;
 						mptr = mptr + 1;
-						mnemonic_stream[255-mptr*8 -: 64] = current_addr[63:0] + 64'd4;
+						imm[63:0] = current_addr[63:0] + 64'd4;
+						for (int i=8 ; i> 0 ; i--) begin
+							toascii(mnemonic_stream[255-mptr*8 -: 16],imm[8*i-1 -: 8]);
+							mptr = mptr + 2;
+						end
 					end		
 			8'h74:
 					begin
 						mnemonic_stream[255-mptr*8 -: 8] = "E";
 						mptr = mptr + 1;
 						mptr = mptr + 1;
-						mnemonic_stream[255-mptr*8 -: 64] = current_addr[63:0] + 64'd4;
+						imm[63:0] = current_addr[63:0] + 64'd4;
+						for (int i=8 ; i> 0 ; i--) begin
+							toascii(mnemonic_stream[255-mptr*8 -: 16],imm[8*i-1 -: 8]);
+							mptr = mptr + 2;
+						end
 					end		
 			8'h75: 
 					begin
 						mnemonic_stream[255-mptr*8 -: 16] = "NE";
 						mptr = mptr + 2;
 						mptr = mptr + 1;
-						mnemonic_stream[255-mptr*8 -: 64] = current_addr[63:0] + 64'd4;
+						imm[63:0] = current_addr[63:0] + 64'd4;
+						for (int i=8 ; i> 0 ; i--) begin
+							toascii(mnemonic_stream[255-mptr*8 -: 16],imm[8*i-1 -: 8]);
+							mptr = mptr + 2;
+						end
 					end		
 			8'h76:
 					begin
 						mnemonic_stream[255-mptr*8 -: 16] = "NA";
 						mptr = mptr + 2;
 						mptr = mptr + 1;
-						mnemonic_stream[255-mptr*8 -: 64] = current_addr[63:0] + 64'd4;
+						imm[63:0] = current_addr[63:0] + 64'd4;
+						for (int i=8 ; i> 0 ; i--) begin
+							toascii(mnemonic_stream[255-mptr*8 -: 16],imm[8*i-1 -: 8]);
+							mptr = mptr + 2;
+						end
 					end		
 			8'h77:
 					begin
 						mnemonic_stream[255-mptr*8 -: 8] = "A";
 						mptr = mptr + 1;
+						imm[63:0] = current_addr[63:0] + 64'd4;
+						for (int i=8 ; i> 0 ; i--) begin
+							toascii(mnemonic_stream[255-mptr*8 -: 16],imm[8*i-1 -: 8]);
+							mptr = mptr + 2;
+						end
 					end		
 			8'h78:
 					begin
 						mnemonic_stream[255-mptr*8 -: 8] = "S";
 						mptr = mptr + 1;
+						imm[63:0] = current_addr[63:0] + 64'd4;
+						for (int i=8 ; i> 0 ; i--) begin
+							toascii(mnemonic_stream[255-mptr*8 -: 16],imm[8*i-1 -: 8]);
+							mptr = mptr + 2;
+						end
 					end		
 			8'h79:
 					begin
 						mnemonic_stream[255-mptr*8 -: 16] = "NS";
 						mptr = mptr + 2;
+						imm[63:0] = current_addr[63:0] + 64'd4;
+						for (int i=8 ; i> 0 ; i--) begin
+							toascii(mnemonic_stream[255-mptr*8 -: 16],imm[8*i-1 -: 8]);
+							mptr = mptr + 2;
+						end
 					end		
 			8'h7a:
 					begin
 						mnemonic_stream[255-mptr*8 -: 16] = "PE";
 						mptr = mptr + 2;
+						imm[63:0] = current_addr[63:0] + 64'd4;
+						for (int i=8 ; i> 0 ; i--) begin
+							toascii(mnemonic_stream[255-mptr*8 -: 16],imm[8*i-1 -: 8]);
+							mptr = mptr + 2;
+						end
 					end		
 			8'h7b: 
 					begin
 						mnemonic_stream[255-mptr*8 -: 16] = "PO";
 						mptr = mptr + 2;
+						imm[63:0] = current_addr[63:0] + 64'd4;
+						for (int i=8 ; i> 0 ; i--) begin
+							toascii(mnemonic_stream[255-mptr*8 -: 16],imm[8*i-1 -: 8]);
+							mptr = mptr + 2;
+						end
 					end
 			8'h7c: 
 					begin
 						mnemonic_stream[255-mptr*8 -: 24] = "NGE";
 						mptr = mptr + 3;
+						imm[63:0] = current_addr[63:0] + 64'd4;
+						for (int i=8 ; i> 0 ; i--) begin
+							toascii(mnemonic_stream[255-mptr*8 -: 16],imm[8*i-1 -: 8]);
+							mptr = mptr + 2;
+						end
 					end
 			8'h7d: 
 					begin
 						mnemonic_stream[255-mptr*8 -: 16] = "GE";
 						mptr = mptr + 2;
+						imm[63:0] = current_addr[63:0] + 64'd4;
+						for (int i=8 ; i> 0 ; i--) begin
+							toascii(mnemonic_stream[255-mptr*8 -: 16],imm[8*i-1 -: 8]);
+							mptr = mptr + 2;
+						end
 					end
 			8'h7e:
 					begin
 						mnemonic_stream[255-mptr*8 -: 16] = "LE";
 						mptr = mptr + 2;
+						imm[63:0] = current_addr[63:0] + 64'd4;
+						for (int i=8 ; i> 0 ; i--) begin
+							toascii(mnemonic_stream[255-mptr*8 -: 16],imm[8*i-1 -: 8]);
+							mptr = mptr + 2;
+						end
 					end
 			8'h7f:
 					begin
 						mnemonic_stream[255-mptr*8 -: 24] = "NLE";
 						mptr = mptr + 3;
+						imm[63:0] = current_addr[63:0] + 64'd4;
+						for (int i=8 ; i> 0 ; i--) begin
+							toascii(mnemonic_stream[255-mptr*8 -: 16],imm[8*i-1 -: 8]);
+							mptr = mptr + 2;
+						end
 					end
 			8'h80: ;
 			8'h81: ;
@@ -795,8 +868,7 @@ endtask
 
 		
 task decode_instr2;
-//	logic [63:0] imm;
-//	logic [7:0] i;
+	logic [63:0] imm;
 	begin
 		case (instr[7:0])
 			8'h00: ;
@@ -932,122 +1004,177 @@ task decode_instr2;
 						mnemonic_stream[255-mptr*8 -: 8] = "O";
 						mptr = mptr + 1;
 						mptr = mptr + 1;
-			/*			imm[63:0] = current_addr[63:0] + 64'd4;
-						for(i=8'd7;i>=8'b0;i--) begin
+						imm[63:0] = current_addr[63:0] + 64'd4;
+						for (int i=8 ; i>= 0 ; i--) begin
 							toascii(mnemonic_stream[255-mptr*8 -: 16],imm[8*(i+1)-1 -: 8]);
 							mptr = mptr + 2;
 						end
-			*/			mnemonic_stream[255-mptr*8 -: 64] = current_addr[63:0] + 64'd4;
 					end		
 			8'h81:
 					begin
 						mnemonic_stream[255-mptr*8 -: 16] = "NO";
 						mptr = mptr + 2;
 						mptr = mptr + 1;
-						mnemonic_stream[255-mptr*8 -: 64] = current_addr[63:0] + 64'd4;
+						imm[63:0] = current_addr[63:0] + 64'd4;
+						for (int i=8 ; i> 0 ; i--) begin
+							toascii(mnemonic_stream[255-mptr*8 -: 16],imm[8*i-1 -: 8]);
+							mptr = mptr + 2;
+						end
 					end		
 			8'h82: 
 					begin
 						mnemonic_stream[255-mptr*8 -: 24] = "NAE";
 						mptr = mptr + 3;
 						mptr = mptr + 1;
-						mnemonic_stream[255-mptr*8 -: 64] = current_addr[63:0] + 64'd4;
+						imm[63:0] = current_addr[63:0] + 64'd4;
+						for (int i=8 ; i> 0 ; i--) begin
+							toascii(mnemonic_stream[255-mptr*8 -: 16],imm[8*i-1 -: 8]);
+							mptr = mptr + 2;
+						end
 					end		
 			8'h83: 
 					begin
 						mnemonic_stream[255-mptr*8 -: 16] = "AE";
 						mptr = mptr + 2;
 						mptr = mptr + 1;
-						mnemonic_stream[255-mptr*8 -: 64] = current_addr[63:0] + 64'd4;
+						imm[63:0] = current_addr[63:0] + 64'd4;
+						for (int i=8 ; i> 0 ; i--) begin
+							toascii(mnemonic_stream[255-mptr*8 -: 16],imm[8*i-1 -: 8]);
+							mptr = mptr + 2;
+						end
 					end		
 			8'h84:
 					begin
 						mnemonic_stream[255-mptr*8 -: 8] = "E";
 						mptr = mptr + 1;
 						mptr = mptr + 1;
-						mnemonic_stream[255-mptr*8 -: 64] = current_addr[63:0] + 64'd4;
+						imm[63:0] = current_addr[63:0] + 64'd4;
+						for (int i=8 ; i> 0 ; i--) begin
+							toascii(mnemonic_stream[255-mptr*8 -: 16],imm[8*i-1 -: 8]);
+							mptr = mptr + 2;
+						end
 					end		
 			8'h85: 
 					begin
 						mnemonic_stream[255-mptr*8 -: 16] = "NE";
 						mptr = mptr + 2;
 						mptr = mptr + 1;
-						mnemonic_stream[255-mptr*8 -: 64] = current_addr[63:0] + 64'd4;
+
+						imm[63:0] = current_addr[63:0] + 64'd4;
+						for (int i=8 ; i> 0 ; i--) begin
+							toascii(mnemonic_stream[255-mptr*8 -: 16],imm[8*i-1 -: 8]);
+							mptr = mptr + 2;
+						end
 					end		
 			8'h86:
 					begin
 						mnemonic_stream[255-mptr*8 -: 16] = "NA";
 						mptr = mptr + 2;
 						mptr = mptr + 1;
-						mnemonic_stream[255-mptr*8 -: 64] = current_addr[63:0] + 64'd4;
+						imm[63:0] = current_addr[63:0] + 64'd4;
+						for (int i=8 ; i> 0 ; i--) begin
+							toascii(mnemonic_stream[255-mptr*8 -: 16],imm[8*i-1 -: 8]);
+							mptr = mptr + 2;
+						end
 					end		
 			8'h87:
 					begin
 						mnemonic_stream[255-mptr*8 -: 8] = "A";
 						mptr = mptr + 1;
 						mptr = mptr + 1;
-						mnemonic_stream[255-mptr*8 -: 64] = current_addr[63:0] + 64'd4;
+						imm[63:0] = current_addr[63:0] + 64'd4;
+						for (int i=8 ; i> 0 ; i--) begin
+							toascii(mnemonic_stream[255-mptr*8 -: 16],imm[8*i-1 -: 8]);
+							mptr = mptr + 2;
+						end
 					end		
 			8'h88:
 					begin
 						mnemonic_stream[255-mptr*8 -: 8] = "S";
 						mptr = mptr + 1;
 						mptr = mptr + 1;
-						mnemonic_stream[255-mptr*8 -: 64] = current_addr[63:0] + 64'd4;
+						imm[63:0] = current_addr[63:0] + 64'd4;
+						for (int i=8 ; i> 0 ; i--) begin
+							toascii(mnemonic_stream[255-mptr*8 -: 16],imm[8*i-1 -: 8]);
+							mptr = mptr + 2;
+						end
 					end		
 			8'h89:
 					begin
 						mnemonic_stream[255-mptr*8 -: 16] = "NS";
 						mptr = mptr + 2;
 						mptr = mptr + 1;
-						mnemonic_stream[255-mptr*8 -: 64] = current_addr[63:0] + 64'd4;
+						imm[63:0] = current_addr[63:0] + 64'd4;
+						for (int i=8 ; i> 0 ; i--) begin
+							toascii(mnemonic_stream[255-mptr*8 -: 16],imm[8*i-1 -: 8]);
+							mptr = mptr + 2;
+						end
 					end		
 			8'h8a:
 					begin
 						mnemonic_stream[255-mptr*8 -: 16] = "PE";
 						mptr = mptr + 2;
 						mptr = mptr + 1;
-						mnemonic_stream[255-mptr*8 -: 64] = current_addr[63:0] + 64'd4;
+						imm[63:0] = current_addr[63:0] + 64'd4;
+						for (int i=8 ; i> 0 ; i--) begin
+							toascii(mnemonic_stream[255-mptr*8 -: 16],imm[8*i-1 -: 8]);
+							mptr = mptr + 2;
+						end
 					end		
 			8'h8b: 
 					begin
 						mnemonic_stream[255-mptr*8 -: 16] = "PO";
 						mptr = mptr + 2;
 						mptr = mptr + 1;
-						mnemonic_stream[255-mptr*8 -: 64] = current_addr[63:0] + 64'd4;
+						imm[63:0] = current_addr[63:0] + 64'd4;
+						for (int i=8 ; i> 0 ; i--) begin
+							toascii(mnemonic_stream[255-mptr*8 -: 16],imm[8*i-1 -: 8]);
+							mptr = mptr + 2;
+						end
 					end
 			8'h8c: 
 					begin
 						mnemonic_stream[255-mptr*8 -: 24] = "NGE";
 						mptr = mptr + 3;
 						mptr = mptr + 1;
-						mnemonic_stream[255-mptr*8 -: 64] = current_addr[63:0] + 64'd4;
+						imm[63:0] = current_addr[63:0] + 64'd4;
+						for (int i=8 ; i> 0 ; i--) begin
+							toascii(mnemonic_stream[255-mptr*8 -: 16],imm[8*i-1 -: 8]);
+							mptr = mptr + 2;
+						end
 					end
 			8'h8d: 
 					begin
 						mnemonic_stream[255-mptr*8 -: 16] = "GE";
 						mptr = mptr + 2;
 						mptr = mptr + 1;
-					/*	imm[63:0] = current_addr[63:0] + 64'd4;
-						for(i=8'd7;i>=8'b0;i--) begin
-							toascii(mnemonic_stream[255-mptr*8 -: 16],imm[8*(i+1)-1 -: 8]);
+						imm[63:0] = current_addr[63:0] + 64'd4;
+						for (int i=8 ; i> 0 ; i--) begin
+							toascii(mnemonic_stream[255-mptr*8 -: 16],imm[8*i-1 -: 8]);
 							mptr = mptr + 2;
 						end
-					*/	mnemonic_stream[255-mptr*8 -: 64] = current_addr[63:0] + 64'd4;
 					end
 			8'h8e:
 					begin
 						mnemonic_stream[255-mptr*8 -: 16] = "LE";
 						mptr = mptr + 2;
 						mptr = mptr + 1;
-						mnemonic_stream[255-mptr*8 -: 64] = current_addr[63:0] + 64'd4;
+						imm[63:0] = current_addr[63:0] + 64'd4;
+						for (int i=8 ; i> 0 ; i--) begin
+							toascii(mnemonic_stream[255-mptr*8 -: 16],imm[8*i-1 -: 8]);
+							mptr = mptr + 2;
+						end
 					end
 			8'h8f:
 					begin
 						mnemonic_stream[255-mptr*8 -: 24] = "NLE";
 						mptr = mptr + 3;
 						mptr = mptr + 1;
-						mnemonic_stream[255-mptr*8 -: 64] = current_addr[63:0] + 64'd4;
+						imm[63:0] = current_addr[63:0] + 64'd4;
+						for (int i=8 ; i> 0 ; i--) begin
+							toascii(mnemonic_stream[255-mptr*8 -: 16],imm[8*i-1 -: 8]);
+							mptr = mptr + 2;
+						end
 					end
         	8'h90: ;
 			8'h91: ;

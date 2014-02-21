@@ -4,6 +4,8 @@ module Decoder(
 	Sysbus bus
 	/* verilator lint_on UNUSED */ /* verilator lint_on UNDRIVEN */
 	,
+	output logic[191:0] opcode_stream,
+    output logic[255:0] mnemonic_stream,
     input logic[0:15*8-1] buffer,
 	input logic[63:0] op[0:255],
 	input logic[63:0] op2[0:255],
@@ -16,6 +18,9 @@ logic [3:0] rex_bits;
 logic[7:0] modrm;
 //logic [0:0] RR_addr;
 logic [0:0] RM;
+// Output strings
+logic [7:0] optr;
+logic [7:0] mptr;
 
 typedef enum {
 	UNDEFINED=3'b000,
@@ -32,21 +37,21 @@ task check_legacy_prefix;
 
 	begin
 		inc = 4'd1;
-		$display("Byte: 0x%x", buffer[inst_byte_offset*8 +: 8]);
+//		$display("Byte: 0x%x", buffer[inst_byte_offset*8 +: 8]);
 		case (buffer[inst_byte_offset*8 +: 8])
-			8'hF0: $display("Group 1: lock prefix");
-			8'hF2: $display("Group 1: REPNE/REPNZ");
-			8'hF3: $display("Group 1: REPE/REPZ");
-			8'h2E: $display("Group 2: CS segement override prefix / branch not taken");
-			8'h36: $display("Group 2: SS segment override prefix");
-			8'h3E: $display("Group 2: DS segment override prefix");
-			8'h26: $display("Group 2: ES segment override prefix / branch taken hint");
-			8'h64: $display("Group 2: FS segment override prefix");
-			8'h65: $display("Group 2: GS segment override prefix");
-			8'h66: $display("Group 3: operand size override prefix");
-			8'h67: $display("Group 4: address override prefix");
+			8'hF0: /* $display("Group 1: lock prefix") */ ;
+			8'hF2: /* $display("Group 1: REPNE/REPNZ") */ ;
+			8'hF3: /* $display("Group 1: REPE/REPZ") */ ;
+			8'h2E: /* $display("Group 2: CS segement override prefix / branch not taken") */ ;
+			8'h36: /* $display("Group 2: SS segment override prefix") */ ;
+			8'h3E: /* $display("Group 2: DS segment override prefix") */ ;
+			8'h26: /* $display("Group 2: ES segment override prefix / branch taken hint") */ ;
+			8'h64: /* $display("Group 2: FS segment override prefix") */ ;
+			8'h65: /* $display("Group 2: GS segment override prefix") */ ;
+			8'h66: /* $display("Group 3: operand size override prefix") */ ;
+			8'h67: /* $display("Group 4: address override prefix") */ ;
 			default: begin
-				$display("Not a legacy instruction prefix");
+				/* $display("Not a legacy instruction prefix") */ ;
 				inc = 4'd0;
 			end
 		endcase
@@ -61,34 +66,39 @@ task check_rex_prefix;
 	output inst_field_t next_field_type;
 	input logic[3:0] inst_byte_offset;
 	logic[7:0] ibyte;
-	logic [3:0] rex_identifier;
+	logic[15:0] out;
 	logic[3:0] inc;
 
 	begin
 		inc = 4'd1; 
-		$display("Byte: 0x%x", buffer[inst_byte_offset*8 +: 8]);
-		ibyte = buffer[inst_byte_offset*8 +: 8];
-		rex_identifier[3:0] = ibyte[7:4];
-		rex_bits[3:0] = ibyte[3:0];
+		// $display("Byte: 0x%x", buffer[inst_byte_offset*8 +: 8]);
+		ibyte[7:0] = buffer[inst_byte_offset*8 +: 8];
 
-		if (rex_identifier == 4'b0100) begin
-			$display("REX prefix");
-			if (rex_bits[3] == 1'b1)
-				$display("REX: 64 bit operand size");
-			if (rex_bits[2] == 1'b1)
-				$display("REX: Mod R/M reg field");
-			if (rex_bits[1] == 1'b1)
-				$display("REX: SIB extension field present");
-			if (rex_bits[0] == 1'b1)
-				$display("REX: ModR/M or SIB or Opcode reg");
+		if (ibyte[7:4] == 4'b0100) begin
+			// $display("REX prefix");
+//			if (rex_bits[3] == 1'b1)
+//				$display("REX: 64 bit operand size");
+//			if (rex_bits[2] == 1'b1)
+//				$display("REX: Mod R/M reg field");
+//			if (rex_bits[1] == 1'b1)
+//				$display("REX: SIB extension field present");
+//			if (rex_bits[0] == 1'b1)
+//				$display("REX: ModR/M or SIB or Opcode reg");
+			rex_bits[3:0] = ibyte[3:0];
+			inc = 4'd1;
+			toascii(out,ibyte[7:0]);
+			opcode_stream[191-optr*8 -: 16] = out;
+			optr = optr + 3;
 		end
 		else begin
-			$display("Not a REX prefix");
+			// $display("Not a REX prefix");
 			inc = 4'd0;
+			rex_bits[3:0] = 4'b0;
 		end
 
 		next_byte_offset = inst_byte_offset + inc;
 		next_field_type = OPCODE;
+		if (rex_bits[3] == 0);
 	end
 endtask
 
@@ -98,27 +108,42 @@ task check_opcode;
 	output inst_field_t next_field_type;
 	input logic[3:0] inst_byte_offset;
 	logic[3:0] inc;
+	logic[15:0] out1;
+	logic[15:0] out2;
 
 	begin
 		inc = 1;
         if (buffer[inst_byte_offset*8 +: 8]==8'h0f) begin
             inst_byte_offset=inst_byte_offset+1;
 			inc = inc + 1;
-		    $display("Opcode 2: 0x%x", buffer[inst_byte_offset*8 +: 8]);	
-		    $display("Opcode 2: %s", op2[buffer[inst_byte_offset*8 +: 8]]);	
+		    //$display("Opcode 2: 0x%x", buffer[inst_byte_offset*8 +: 8]);	
+		    //$display("Opcode 2: %s", op2[buffer[inst_byte_offset*8 +: 8]]);	
+			toascii(out1,8'h0f);
+			opcode_stream[191-optr*8 -: 16] = out1; 
+			optr = optr + 3;
+			toascii(out2,buffer[inst_byte_offset*8 +: 8]);	
+			opcode_stream[191-optr*8 -: 16] = out2; 
+			mnemonic_stream[optr*8 +: 64] = op2[buffer[inst_byte_offset*8 +: 8]] ;
+			optr = optr + 3;
+			mptr = mptr + 8;
 			RM = ModRM2[255-buffer[inst_byte_offset*8 +: 8]];
         end
         else begin 
-		    $display("Opcode 1: 0x%x", buffer[inst_byte_offset*8 +: 8]);	
-		    $display("Opcode 1: %s", op[buffer[inst_byte_offset*8 +: 8]]);	
+		    //$display("Opcode 1: 0x%x", buffer[inst_byte_offset*8 +: 8]);	
+		    //$display("Opcode 1: %s", op[buffer[inst_byte_offset*8 +: 8]]);	
+			toascii(out1,buffer[inst_byte_offset*8 +: 8]);	
+			opcode_stream[191-optr*8 -: 16] = out1;
+			mnemonic_stream[optr*8 +: 64] = op[buffer[inst_byte_offset*8 +: 8]] ;
+			optr = optr + 3;
+			mptr = mptr + 8;
 			RM = ModRM[255-buffer[inst_byte_offset*8 +: 8]];
 	    end
 		if (RM) begin
-			$display("ModRM present");
+			//$display("ModRM present");
 			next_field_type = MOD_RM;
 		end
 		else begin
-			$display("ModRM absent");
+			//$display("ModRM absent");
 			next_field_type = LEGACY_PREFIX;
 		end
         next_byte_offset = inst_byte_offset + inc;
@@ -131,20 +156,25 @@ task check_modrm;
 	output inst_field_t next_field_type;
 	input logic[3:0] inst_byte_offset;
 	logic[3:0] inc;
+	logic[15:0] out1;
 
 	begin
 		inc = 1;
 		modrm=buffer[inst_byte_offset*8 +: 8];
-		if(modrm[7:6] == 2'b11) begin
-			$display("Register Register Addressing (No Memory Operand); REX.X not used");
+		toascii(out1,modrm);	
+		opcode_stream[191-optr*8 -: 16] = out1;
+		optr = optr + 3;
+	/*	if(modrm[7:6] == 2'b11) begin
+		//	$display("Register Register Addressing (No Memory Operand); REX.X not used");
 			//RR_addr[0] = 1'b1;
 		end
 		else begin
-			$display("Memory Addressing without an SIB Byte, REX.X Not Used");
+		//	$display("Memory Addressing without an SIB Byte, REX.X Not Used");
 			//RR_addr[0] = 1'b0;
 		end
-		$display("Register Name : %x",{rex_bits[2],modrm[5:3]});
-		
+	*/	//$display("Register Name : %x",{rex_bits[2],modrm[5:3]});
+	
+		if(rex_bits[2]);
 		if(modrm[2:0] == 3'b100) begin
 				next_field_type = SIB;
 		end
@@ -181,10 +211,10 @@ task check_sib;
 		index[3:0] = {rex_bits[1], sib[5:3]};
 		base[3:0] = {rex_bits[0], sib[2:0]};
 			
-		$display("scale: b%b", scale);
-		$display("index: b%b", index);
-		$display("base : b%b", base);
-
+	//	 $display("scale: b%b", scale);
+	//	 $display("index: b%b", index);
+	//	 $display("base : b%b", base);
+		if(base[3]==0);  // TO be removed
 
 		if (modrm[7:6] == 2'b00 ) begin
 			if (index[3:0] == 4'b0100 ) begin
@@ -253,10 +283,11 @@ task check_sib;
 
         next_byte_offset = inst_byte_offset + inc;
 		next_field_type = LEGACY_PREFIX;
-		$display("Next Byte Offset: %d , Inst_byte_offset: %d, inc:%d ",next_byte_offset,inst_byte_offset,inc);
-		$display("Scale factor: 0x%x", scale_factor[31:0]);
+	//	$display("Next Byte Offset: %d , Inst_byte_offset: %d, inc:%d ",next_byte_offset,inst_byte_offset,inc);
+	//	$display("Scale factor: 0x%x", scale_factor[31:0]);
 	end
 endtask
+
 
 task decode;
 	output logic[3:0] increment_by;
@@ -270,13 +301,12 @@ task decode;
 	inst_field_t next_fld_type;
 
 	begin
+
+		opcode_stream[191:0] = "                        ";
+		mnemonic_stream[255:0] = "                                ";
+		optr[7:0] = 8'b0;
+		mptr[7:0] = 8'b0;
 		next_fld_type = LEGACY_PREFIX;
-//		if ((next_fld_type & LEGACY_PREFIX) == LEGACY_PREFIX )
-//			check_legacy_prefix(increment_by,next_fld_type,inst_byte_off);
-//		if ((next_fld_type & REX_PREFIX) == REX_PREFIX )
-//			check_rex_prefix(increment_by,next_fld_type,inst_byte_off+increment_by);
-//		if ((next_fld_type & OPCODE) == OPCODE )
-//			check_opcode(increment_by,next_fld_type,inst_byte_off+increment_by);	
 		offs = 0;
 		if ((next_fld_type & LEGACY_PREFIX) == LEGACY_PREFIX ) begin
 			check_legacy_prefix(offs2,next_fld_type,offs);
@@ -302,7 +332,66 @@ task decode;
 		
 		increment_by = offs7;
 		byte_incr = increment_by;
+
+		if (mnemonic_stream == 0);
+		if (opcode_stream[191:0] == 0);
 	end
 endtask
+
+task toascii;
+	output logic[15:0] O;
+	input logic[7:0] V;
+	logic[7:0] N1;
+	logic[7:0] N2;
+
+	begin
+		case ({4'b0,V[7:4]})
+			8'h0: N1[7:0] = 8'h30;
+			8'h1: N1[7:0] = 8'h31;
+			8'h2: N1[7:0] = 8'h32;
+			8'h3: N1[7:0] = 8'h33;
+			8'h4: N1[7:0] = 8'h34;
+			8'h5: N1[7:0] = 8'h35;
+			8'h6: N1[7:0] = 8'h36;
+			8'h7: N1[7:0] = 8'h37;
+			8'h8: N1[7:0] = 8'h38;
+			8'h9: N1[7:0] = 8'h39;
+			8'ha: N1[7:0] = 8'h61;
+			8'hb: N1[7:0] = 8'h62;
+			8'hc: N1[7:0] = 8'h63;
+			8'hd: N1[7:0] = 8'h64;
+			8'he: N1[7:0] = 8'h65;
+			8'hf: N1[7:0] = 8'h66;
+			default: N1[7:0] = 8'b0;
+		endcase
+
+		case ({4'b0,V[3:0]})
+			8'h0: N2[7:0] = 8'h30;
+			8'h1: N2[7:0] = 8'h31;
+			8'h2: N2[7:0] = 8'h32;
+			8'h3: N2[7:0] = 8'h33;
+			8'h4: N2[7:0] = 8'h34;
+			8'h5: N2[7:0] = 8'h35;
+			8'h6: N2[7:0] = 8'h36;
+			8'h7: N2[7:0] = 8'h37;
+			8'h8: N2[7:0] = 8'h38;
+			8'h9: N2[7:0] = 8'h39;
+			8'ha: N2[7:0] = 8'h61;
+			8'hb: N2[7:0] = 8'h62;
+			8'hc: N2[7:0] = 8'h63;
+			8'hd: N2[7:0] = 8'h64;
+			8'he: N2[7:0] = 8'h65;
+			8'hf: N2[7:0] = 8'h66;
+			default: N2[7:0] = 8'b0;
+		endcase
+
+		if(N1[7:4] == 0);
+		if(N2[7:4] == 0);
+		O = {N1[7:0], N2[7:0]};
+
+	end
+endtask
+
+		
 
 endmodule

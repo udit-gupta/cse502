@@ -76,9 +76,11 @@ module Core (
 	mystring op2[0:255];
 	logic [255:0] ModRM;
 	logic [255:0] ModRM2;
+	logic[191:0] opcode_stream;
+	logic[255:0] mnemonic_stream;
 	Opcodes opc(op,ModRM);
 	Opcodes2 opc2(op2,ModRM2);
-	Decoder D(bytes_decoded_this_cycle, bus, decode_bytes,op,op2,ModRM,ModRM2);
+	Decoder D(bytes_decoded_this_cycle, bus, opcode_stream, mnemonic_stream,decode_bytes,op,op2,ModRM,ModRM2);
 
 	always_comb begin
 		if (can_decode) begin : decode_block
@@ -86,12 +88,12 @@ module Core (
 			// remove the following line. It is only here to allow successful compilation in the absence of your code.
 			if (decode_bytes == 0) ;
 			bytes_decoded_this_cycle = 0;
-			$display("\n");
-			$display("Buffer =>: 0x%x", decode_bytes);
+	//		$display("\n");
+	//		$display("Buffer =>: 0x%x", decode_bytes);
 			//bytes_decoded_this_cycle = 4'b1111;
 			D.decode(bytes_decoded_this_cycle);
-			$display("bytes_decoded_this_cycle : %d", bytes_decoded_this_cycle); 
-			$display("bytes_decoded_this_cycle : %d", bytes_decoded_this_cycle); 
+	//		$display("bytes_decoded_this_cycle : %d", bytes_decoded_this_cycle); 
+	//		$display("bytes_decoded_this_cycle : %d", bytes_decoded_this_cycle); 
 			
 			// cse502 : following is an example of how to finish the simulation
 			if (decode_bytes == 0 && fetch_state == fetch_idle) $finish;
@@ -109,9 +111,11 @@ module Core (
 		end else begin // !bus.reset
 
 			decode_offset <= decode_offset + { 3'b0, bytes_decoded_this_cycle };
-			$display("Buffer =>: 0x%x", decode_bytes);
-			$display("Offset after: %x", decode_offset);
-			$display(" < ---------------------------------------------------------------------------------------------- > ");
+//			$display("Buffer =>: 0x%x", decode_bytes);
+//			$display("Offset after: %x", decode_offset);
+//			$display(" < ---------------------------------------------------------------------------------------------- > ");
+				
+			$display("%s %s", opcode_stream[191:0],mnemonic_stream[255:0]); 
 		end
 
 endmodule

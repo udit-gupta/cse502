@@ -194,45 +194,7 @@ task check_modrm;
         reg1[2:0]=modrm[5:3];
         rm[2:0]=modrm[2:0];
 
-		case({rex_bits[2],reg1[2:0]}) 
-            4'b0000: ereg[31:0]="%rax";
-            4'b0001: ereg[31:0]="%rcx";
-            4'b0010: ereg[31:0]="%rdx";
-            4'b0011: ereg[31:0]="%rbx";
-            4'b0100: ereg[31:0]="%rsp";
-            4'b0101: ereg[31:0]="%rbp";
-            4'b0110: ereg[31:0]="%rsi";
-            4'b0111: ereg[31:0]="%rdi";
-            4'b1000: ereg[31:0]="%r8";
-            4'b1001: ereg[31:0]="%r9";
-            4'b1010: ereg[31:0]="%r10";
-            4'b1011: ereg[31:0]="%r11";
-            4'b1100: ereg[31:0]="%r12";
-            4'b1101: ereg[31:0]="%r13";
-            4'b1110: ereg[31:0]="%r14";
-            4'b1111: ereg[31:0]="%r15";
-            default: ;
-        endcase
-
-		case({rex_bits[0],rm[2:0]}) 
-            4'b0000: greg[31:0]="%rax";
-            4'b0001: greg[31:0]="%rcx";
-            4'b0010: greg[31:0]="%rdx";
-            4'b0011: greg[31:0]="%rbx";
-            4'b0100: greg[31:0]="%rsp";
-            4'b0101: greg[31:0]="%rbp";
-            4'b0110: greg[31:0]="%rsi";
-            4'b0111: greg[31:0]="%rdi";
-            4'b1000: greg[31:0]="%r8";
-            4'b1001: greg[31:0]="%r9";
-            4'b1010: greg[31:0]="%r10";
-            4'b1011: greg[31:0]="%r11";
-            4'b1100: greg[31:0]="%r12";
-            4'b1101: greg[31:0]="%r13";
-            4'b1110: greg[31:0]="%r14";
-            4'b1111: greg[31:0]="%r15";
-            default: ;
-        endcase
+		get_reg();
 
         if(mod[1:0]==2'b00) begin
             if(rm[2:0]==3'b110) begin
@@ -414,12 +376,14 @@ task check_disp;
 endtask
 
 task decode_instr;
-	logic [63:0] immediate;
-	logic [7:0] imm64_bytes;
+	
+//	logic [63:0] immediate;
+//	logic [7:0] imm64_bytes;
 	logic [63:0] imm;
-	logic [7:0] imm_1byte;
-	logic [15:0] out1;
-	logic [15:0] out2;
+//	logic [7:0] imm_1byte;
+//	logic [15:0] out1;
+//	logic [15:0] out2;
+
 	begin
 		case (instr[7:0])
 			8'h00: ;
@@ -780,55 +744,10 @@ task decode_instr;
 			8'h80: ;
 			8'h81: ;
 			8'h82: ;
-			8'h83: 
+			8'h83:
 				begin
-					mptr = 0;
-					case(reg1[2:0])
-						3'b000: 
-						mnemonic_stream[255-mptr*8 -: 24] = "ADD";
-						3'b001:
-						mnemonic_stream[255-mptr*8 -: 24] = "OR";
-						3'b010:
-						mnemonic_stream[255-mptr*8 -: 24] = "ADC";
-						3'b011:
-						mnemonic_stream[255-mptr*8 -: 24] = "SBB";
-						3'b100:
-						mnemonic_stream[255-mptr*8 -: 24] = "AND";
-						3'b101:
-						mnemonic_stream[255-mptr*8 -: 24] = "SUB";
-						3'b110:
-						mnemonic_stream[255-mptr*8 -: 24] = "XOR";
-						3'b111:
-						mnemonic_stream[255-mptr*8 -: 24] = "CMP";
-					endcase
-					mptr = mptr + 3;
-					mptr = mptr + 1;
-			
-					mnemonic_stream[255-mptr*8 -: 24] = "$0x";
-					mptr = mptr + 3;
-					
-					
-            		imm64_bytes[7:0]=$signed(buffer[byte_incr*8 +: 8]);
-            		immediate[63:0] ={ {56{imm64_bytes[7]}} , imm64_bytes[7:0] };
-
-					for(int i=1;i<=8;i++) begin
-						toascii(out2,immediate[8*i +: 8]);
-						mnemonic_stream[255-mptr*8 -: 16]=out2[15:0];
-						mptr = mptr + 2;
-					end
-
-					mnemonic_stream[255-mptr*8 -: 8] = ",";
-					mptr = mptr + 1;
-					
-					mnemonic_stream[255-mptr*8 -: 32] = ereg[31:0];  
-					mptr = mptr + 4;
-
-					imm_1byte[7:0] =  buffer[byte_incr*8 +: 8];
-					toascii(out1,imm_1byte);
-					opcode_stream[191-optr*8 -: 16] = out1[15:0];
-					optr = optr + 3;
-					byte_incr = byte_incr + 1;
-			end
+					handle_immediate();
+				end
 			8'h84: ;
 			8'h85: ;
 			8'h86: ;
@@ -893,14 +812,20 @@ task decode_instr;
 			8'hb5: ;
 			8'hb6: ;
 			8'hb7: ;
-			8'hb8: ;
+			8'hb8: 
+				begin
+
+				end
 			8'hb9: ;
 			8'hba: ;
 			8'hbb: ;
 			8'hbc: ;
 			8'hbd: ;
 			8'hbe: ;
-			8'hbf: ;
+			8'hbf:
+				begin
+			 		get_reg();
+				end
 			8'hc0: ;
 			8'hc1: ;
 			8'hc2: ;
@@ -1515,6 +1440,115 @@ task decode_instr2;
 		endcase
 	end
 
+endtask
+
+task get_reg;
+
+begin
+	mod[1:0]=modrm[7:6];
+	reg1[2:0]=modrm[5:3];
+	rm[2:0]=modrm[2:0];
+
+	case({rex_bits[2],reg1[2:0]}) 
+		4'b0000: ereg[31:0]="%rax";
+		4'b0001: ereg[31:0]="%rcx";
+		4'b0010: ereg[31:0]="%rdx";
+		4'b0011: ereg[31:0]="%rbx";
+		4'b0100: ereg[31:0]="%rsp";
+		4'b0101: ereg[31:0]="%rbp";
+		4'b0110: ereg[31:0]="%rsi";
+		4'b0111: ereg[31:0]="%rdi";
+		4'b1000: ereg[31:0]="%r8";
+		4'b1001: ereg[31:0]="%r9";
+		4'b1010: ereg[31:0]="%r10";
+		4'b1011: ereg[31:0]="%r11";
+		4'b1100: ereg[31:0]="%r12";
+		4'b1101: ereg[31:0]="%r13";
+		4'b1110: ereg[31:0]="%r14";
+		4'b1111: ereg[31:0]="%r15";
+		default: ;
+	endcase
+
+	case({rex_bits[0],rm[2:0]}) 
+		4'b0000: greg[31:0]="%rax";
+		4'b0001: greg[31:0]="%rcx";
+		4'b0010: greg[31:0]="%rdx";
+		4'b0011: greg[31:0]="%rbx";
+		4'b0100: greg[31:0]="%rsp";
+		4'b0101: greg[31:0]="%rbp";
+		4'b0110: greg[31:0]="%rsi";
+		4'b0111: greg[31:0]="%rdi";
+		4'b1000: greg[31:0]="%r8";
+		4'b1001: greg[31:0]="%r9";
+		4'b1010: greg[31:0]="%r10";
+		4'b1011: greg[31:0]="%r11";
+		4'b1100: greg[31:0]="%r12";
+		4'b1101: greg[31:0]="%r13";
+		4'b1110: greg[31:0]="%r14";
+		4'b1111: greg[31:0]="%r15";
+		default: ;
+	endcase
+
+end
+endtask
+
+task handle_immediate;
+
+	logic [63:0] immediate;
+	logic [7:0] imm64_bytes;
+	//logic [63:0] imm;
+	logic [7:0] imm_1byte;
+	logic [15:0] out1;
+	logic [15:0] out2;
+
+	begin
+		mptr = 0;
+		case(reg1[2:0])
+			3'b000: 
+			mnemonic_stream[255-mptr*8 -: 24] = "ADD";
+			3'b001:
+			mnemonic_stream[255-mptr*8 -: 24] = "OR";
+			3'b010:
+			mnemonic_stream[255-mptr*8 -: 24] = "ADC";
+			3'b011:
+			mnemonic_stream[255-mptr*8 -: 24] = "SBB";
+			3'b100:
+			mnemonic_stream[255-mptr*8 -: 24] = "AND";
+			3'b101:
+			mnemonic_stream[255-mptr*8 -: 24] = "SUB";
+			3'b110:
+			mnemonic_stream[255-mptr*8 -: 24] = "XOR";
+			3'b111:
+			mnemonic_stream[255-mptr*8 -: 24] = "CMP";
+		endcase
+		mptr = mptr + 3;
+		mptr = mptr + 1;
+
+		mnemonic_stream[255-mptr*8 -: 24] = "$0x";
+		mptr = mptr + 3;
+
+
+		imm64_bytes[7:0]=$signed(buffer[byte_incr*8 +: 8]);
+		immediate[63:0] ={ {56{imm64_bytes[7]}} , imm64_bytes[7:0] };
+
+		for(int i=1;i<=8;i++) begin
+			toascii(out2,immediate[8*i +: 8]);
+			mnemonic_stream[255-mptr*8 -: 16]=out2[15:0];
+			mptr = mptr + 2;
+		end
+
+		mnemonic_stream[255-mptr*8 -: 8] = ",";
+		mptr = mptr + 1;
+
+		mnemonic_stream[255-mptr*8 -: 32] = ereg[31:0];  
+		mptr = mptr + 4;
+
+		imm_1byte[7:0] =  buffer[byte_incr*8 +: 8];
+		toascii(out1,imm_1byte);
+		opcode_stream[191-optr*8 -: 16] = out1[15:0];
+		optr = optr + 3;
+		byte_incr = byte_incr + 1;
+	end
 endtask
 
 endmodule

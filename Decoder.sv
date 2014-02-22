@@ -782,6 +782,7 @@ task decode_instr;
 			8'h82: ;
 			8'h83: 
 				begin
+					mptr = 0;
 					case(reg1[2:0])
 						3'b000: 
 						mnemonic_stream[255-mptr*8 -: 24] = "ADD";
@@ -802,25 +803,25 @@ task decode_instr;
 					endcase
 					mptr = mptr + 3;
 					mptr = mptr + 1;
-					mnemonic_stream[255-mptr*8 -: 32] = ereg[31:0];  
-					mptr = mptr + 4;
-					mnemonic_stream[255-mptr*8 -: 8] = ",";
-					mptr = mptr + 1;
 			
-					//mnemonic_stream[255-mptr*8 -: 16]=out2[15:0];
-					//mptr = mptr + 3;
+					mnemonic_stream[255-mptr*8 -: 24] = "$0x";
+					mptr = mptr + 3;
 					
 					
             		imm64_bytes[7:0]=$signed(buffer[byte_incr*8 +: 8]);
             		immediate[63:0] ={ {56{imm64_bytes[7]}} , imm64_bytes[7:0] };
 
-					for(int i=0;i<8;i++) begin
+					for(int i=1;i<=8;i++) begin
 						toascii(out2,immediate[8*i +: 8]);
-						$display("%s %d",out2,i);
 						mnemonic_stream[255-mptr*8 -: 16]=out2[15:0];
 						mptr = mptr + 2;
 					end
+
+					mnemonic_stream[255-mptr*8 -: 8] = ",";
+					mptr = mptr + 1;
 					
+					mnemonic_stream[255-mptr*8 -: 32] = ereg[31:0];  
+					mptr = mptr + 4;
 
 					imm_1byte[7:0] =  buffer[byte_incr*8 +: 8];
 					toascii(out1,imm_1byte);

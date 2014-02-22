@@ -14,6 +14,14 @@ module Decoder(
 	input logic[255:0] ModRM2
 );
 
+logic signed[31:0] displacement;
+logic[4:0] dispsize;
+//logic[31:0] ereg;
+//logic[31:0] greg;
+logic[1:0] mod;
+logic[2:0] reg1;
+logic[2:0] rm;
+//logic[255:0] immediate;
 logic[0:15*8-1] buffer;
 logic[7:0] instr;
 logic [3:0] rex_bits;
@@ -60,7 +68,7 @@ task check_legacy_prefix;
 		endcase
 
 		next_byte_offset = inst_byte_offset + inc;
-		next_field_type = REX_PREFIX;
+		next_field_type = REX_PREFIX | OPCODE;
 	end
 endtask
 
@@ -182,14 +190,65 @@ task check_modrm;
 		end
 	*/	//$display("Register Name : %x",{rex_bits[2],modrm[5:3]});
 	
-		if(rex_bits[2]);
-		if(modrm[2:0] == 3'b100) begin
-				next_field_type = SIB;
-		end
-		else begin
-				next_field_type = LEGACY_PREFIX;
-		end
+        mod[1:0]=modrm[7:6];
+        reg1[2:0]=modrm[5:3];
+        rm[2:0]=modrm[2:0];
 
+/*
+        case(reg1[2:0]) 
+            3'b000: ereg[31:0]="%rax";
+            3'b001: ereg[31:0]="%rcx";
+            3'b010: ereg[31:0]="%rdx";
+            3'b011: ereg[31:0]="%rbx";
+            3'b100: ereg[31:0]="%rsp";
+            3'b101: ereg[31:0]="%rbp";
+            3'b110: ereg[31:0]="%rsi";
+            3'b111: ereg[31:0]="%rdi";
+            default: ;
+        endcase
+
+        case(rm[2:0]) 
+            3'b000: greg[31:0]="%rax";
+            3'b001: greg[31:0]="%rcx";
+            3'b010: greg[31:0]="%rdx";
+            3'b011: greg[31:0]="%rbx";
+            3'b100: greg[31:0]="%rsp";
+            3'b101: greg[31:0]="%rbp";
+            3'b110: greg[31:0]="%rsi";
+            3'b111: greg[31:0]="%rdi";
+            default: ;
+        endcase
+*/
+        if(mod[1:0]==2'b00) begin
+            if(rm[2:0]==3'b110) begin
+                dispsize[4:0]=5'd16;
+            end
+            else begin
+                dispsize[4:0]=5'd16;
+            end
+        end
+        else if(mod[1:0]==2'b01) begin
+            dispsize[4:0]=5'd8;
+        end
+        else if(mod[1:0]==2'b10) begin
+            dispsize[4:0]=5'd16;
+        end
+        else begin
+            dispsize[4:0]=5'd0;
+        end
+
+		if(rex_bits[2]);  //
+		if(reg1[2:0]==3'b000);   // 
+        
+        
+        next_field_type=LEGACY_PREFIX;
+		if(modrm[2:0] == 3'b100) begin
+				next_field_type = next_field_type | SIB;
+		end
+        if(dispsize[4:0]!=5'd0) begin
+				next_field_type = next_field_type | DISPLACEMENT;
+        end
+		
 		next_byte_offset = inst_byte_offset + inc;
 	end
 endtask
@@ -294,6 +353,37 @@ task check_sib;
 	//	$display("Next Byte Offset: %d , Inst_byte_offset: %d, inc:%d ",next_byte_offset,inst_byte_offset,inc);
 	//	$display("Scale factor: 0x%x", scale_factor[31:0]);
 	end
+endtask
+
+
+task check_disp;
+	output logic[3:0] next_byte_offset;
+	output inst_field_t next_field_type;
+	input logic[3:0] inst_byte_offset;
+	logic[3:0] inc;
+	logic[15:0] disp16_bytes;
+	logic[7:0] disp8_bytes;
+    
+    begin
+        inc=0;
+        if(dispsize==5'd16) begin
+            disp16_bytes[15:0]=$signed(buffer[inst_byte_offset*8 +: 16]);
+            displacement[31:0] ={ {16{disp16_bytes[15]}} , disp16_bytes[15:0] };
+            inc = inc + 4;
+            next_byte_offset = inst_byte_offset + inc;
+        end
+        else if(dispsize==5'd8) begin
+            disp8_bytes[7:0]=$signed(buffer[inst_byte_offset*8 +: 8]);
+            displacement[31:0] ={ {24{disp8_bytes[7]}} , disp8_bytes[7:0] };
+            inc = inc + 1;
+            next_byte_offset = inst_byte_offset + inc;
+        end
+        
+        next_field_type=IMMEDIATE | LEGACY_PREFIX;
+       //if(next_field_type[2:0]==3'b000) ;
+       if(displacement[31:0]==32'd0) ;
+
+    end    
 endtask
 
 task decode_instr;
@@ -767,6 +857,7 @@ task decode;
 	logic[3:0] offs5;
 	logic[3:0] offs6;
 	logic[3:0] offs7;
+	logic[3:0] offs8;
 	inst_field_t next_fld_type;
 
 	begin
@@ -787,19 +878,25 @@ task decode;
 
 		if ((next_fld_type & OPCODE) == OPCODE ) begin
 			check_opcode(offs4,next_fld_type,offs3);
+            offs7=offs4;
 		end
 
 		if ((next_fld_type & MOD_RM) == MOD_RM ) begin
-			check_modrm(offs5,next_fld_type,offs4);
+			check_modrm(offs5,next_fld_type,offs7);
 			offs7 = offs5;
 		end
 
 		if ((next_fld_type & SIB) == SIB ) begin
-			check_sib(offs6,next_fld_type,offs5);
+			check_sib(offs6,next_fld_type,offs7);
 			offs7 = offs6;
 		end
 
-		increment_by = offs7;
+		if ((next_fld_type & DISPLACEMENT) == DISPLACEMENT) begin
+			check_disp(offs8,next_fld_type,offs7);
+			offs7 = offs8;
+		end
+		
+        increment_by = offs7;
 		byte_incr = increment_by;
 	
 		if (num_inst_bytes == 2'b01)

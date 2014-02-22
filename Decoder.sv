@@ -16,8 +16,8 @@ module Decoder(
 
 logic signed[31:0] displacement;
 logic[4:0] dispsize;
-//logic[31:0] ereg;
-//logic[31:0] greg;
+logic[31:0] ereg;
+logic[31:0] greg;
 logic[1:0] mod;
 logic[2:0] reg1;
 logic[2:0] rm;
@@ -194,31 +194,46 @@ task check_modrm;
         reg1[2:0]=modrm[5:3];
         rm[2:0]=modrm[2:0];
 
-/*
-        case(reg1[2:0]) 
-            3'b000: ereg[31:0]="%rax";
-            3'b001: ereg[31:0]="%rcx";
-            3'b010: ereg[31:0]="%rdx";
-            3'b011: ereg[31:0]="%rbx";
-            3'b100: ereg[31:0]="%rsp";
-            3'b101: ereg[31:0]="%rbp";
-            3'b110: ereg[31:0]="%rsi";
-            3'b111: ereg[31:0]="%rdi";
+		case({rex_bits[2],reg1[2:0]}) 
+            4'b0000: ereg[31:0]="%rax";
+            4'b0001: ereg[31:0]="%rcx";
+            4'b0010: ereg[31:0]="%rdx";
+            4'b0011: ereg[31:0]="%rbx";
+            4'b0100: ereg[31:0]="%rsp";
+            4'b0101: ereg[31:0]="%rbp";
+            4'b0110: ereg[31:0]="%rsi";
+            4'b0111: ereg[31:0]="%rdi";
+            4'b1000: ereg[31:0]="%r8";
+            4'b1001: ereg[31:0]="%r9";
+            4'b1010: ereg[31:0]="%r10";
+            4'b1011: ereg[31:0]="%r11";
+            4'b1100: ereg[31:0]="%r12";
+            4'b1101: ereg[31:0]="%r13";
+            4'b1110: ereg[31:0]="%r14";
+            4'b1111: ereg[31:0]="%r15";
             default: ;
         endcase
 
-        case(rm[2:0]) 
-            3'b000: greg[31:0]="%rax";
-            3'b001: greg[31:0]="%rcx";
-            3'b010: greg[31:0]="%rdx";
-            3'b011: greg[31:0]="%rbx";
-            3'b100: greg[31:0]="%rsp";
-            3'b101: greg[31:0]="%rbp";
-            3'b110: greg[31:0]="%rsi";
-            3'b111: greg[31:0]="%rdi";
+		case({rex_bits[0],rm[2:0]}) 
+            4'b0000: greg[31:0]="%rax";
+            4'b0001: greg[31:0]="%rcx";
+            4'b0010: greg[31:0]="%rdx";
+            4'b0011: greg[31:0]="%rbx";
+            4'b0100: greg[31:0]="%rsp";
+            4'b0101: greg[31:0]="%rbp";
+            4'b0110: greg[31:0]="%rsi";
+            4'b0111: greg[31:0]="%rdi";
+            4'b1000: greg[31:0]="%r8";
+            4'b1001: greg[31:0]="%r9";
+            4'b1010: greg[31:0]="%r10";
+            4'b1011: greg[31:0]="%r11";
+            4'b1100: greg[31:0]="%r12";
+            4'b1101: greg[31:0]="%r13";
+            4'b1110: greg[31:0]="%r14";
+            4'b1111: greg[31:0]="%r15";
             default: ;
         endcase
-*/
+
         if(mod[1:0]==2'b00) begin
             if(rm[2:0]==3'b110) begin
                 dispsize[4:0]=5'd16;
@@ -237,18 +252,19 @@ task check_modrm;
             dispsize[4:0]=5'd0;
         end
 
-		if(rex_bits[2]);  //
 		if(reg1[2:0]==3'b000);   // 
+		if(rex_bits[2:0]==3'b000);   // 
         
         
         next_field_type=LEGACY_PREFIX;
-		if(modrm[2:0] == 3'b100) begin
+		if(mod[1:0]!=2'b11 && modrm[2:0] == 3'b100) begin
 				next_field_type = next_field_type | SIB;
 		end
-        if(dispsize[4:0]!=5'd0) begin
+    /*    if(dispsize[4:0]!=5'd0) begin
+				$display("bye");
 				next_field_type = next_field_type | DISPLACEMENT;
-        end
-		
+        end 
+	*/	
 		next_byte_offset = inst_byte_offset + inc;
 	end
 endtask
@@ -267,11 +283,15 @@ task check_sib;
 	logic[31:0] disp;
 	logic[31:0] scale_factor;
 	logic[31:0] byte_off;
+	logic[15:0] out1;
 
 	begin
 		inc = 1;
 		byte_off[31:0]={28'b0,inst_byte_offset};
 		sib = buffer[inst_byte_offset*8 +: 8];
+		toascii(out1,sib);	
+		opcode_stream[191-optr*8 -: 16] = out1;
+		optr = optr + 3;
 		inc = inc + 1;
 
 		scale[1:0] = (1 << sib[7:6]);
@@ -363,16 +383,23 @@ task check_disp;
 	logic[3:0] inc;
 	logic[15:0] disp16_bytes;
 	logic[7:0] disp8_bytes;
+	logic[7:0] disp_opcode;
+	logic[15:0] out1;
     
     begin
         inc=0;
+		disp_opcode = buffer[inst_byte_offset*8 +: 8];
+		toascii(out1,disp_opcode);	
+		opcode_stream[191-optr*8 -: 16] = out1;
         if(dispsize==5'd16) begin
+			optr = optr + 6;
             disp16_bytes[15:0]=$signed(buffer[inst_byte_offset*8 +: 16]);
             displacement[31:0] ={ {16{disp16_bytes[15]}} , disp16_bytes[15:0] };
             inc = inc + 4;
             next_byte_offset = inst_byte_offset + inc;
         end
         else if(dispsize==5'd8) begin
+			optr = optr + 3;
             disp8_bytes[7:0]=$signed(buffer[inst_byte_offset*8 +: 8]);
             displacement[31:0] ={ {24{disp8_bytes[7]}} , disp8_bytes[7:0] };
             inc = inc + 1;
@@ -387,7 +414,12 @@ task check_disp;
 endtask
 
 task decode_instr;
+	logic [63:0] immediate;
+	logic [7:0] imm64_bytes;
 	logic [63:0] imm;
+	logic [7:0] imm_1byte;
+	logic [15:0] out1;
+	logic [15:0] out2;
 	begin
 		case (instr[7:0])
 			8'h00: ;
@@ -439,7 +471,19 @@ task decode_instr;
 			8'h2e: ;
 			8'h2f: ;
 			8'h30: ;
-			8'h31: ;
+			8'h31: 
+				begin
+					mptr = mptr + 4;
+					mnemonic_stream[255-mptr*8 -: 32] = ereg[31:0];  
+					mptr = mptr + 4;
+					mnemonic_stream[255-mptr*8 -: 8] = ",";
+					mptr = mptr + 1;
+					mnemonic_stream[255-mptr*8 -: 32] = greg[31:0];
+					mptr = mptr + 4;
+					if (dispsize[4:0] != 5'b0) begin
+					
+					end 
+				end
 			8'h32: ;
 			8'h33: ;
 			8'h34: ;
@@ -473,64 +517,83 @@ task decode_instr;
 			8'h50: 
 					begin
 						mnemonic_stream[255-mptr*8 -: 40] = " %rax"; 
+						mptr = mptr + 5;
 					end		
 			8'h51: 
 					begin
 						mnemonic_stream[255-mptr*8 -: 40] = " %rcx"; 
+						mptr = mptr + 5;
 					end		
 			8'h52:
 					begin
 						mnemonic_stream[255-mptr*8 -: 40] = " %rdx"; 
+						mptr = mptr + 5;
 					end		
 			8'h53: 
 					begin
 						mnemonic_stream[255-mptr*8 -: 40] = " %rbx"; 
+						mptr = mptr + 5;
 					end		
 			8'h54:
 					begin
 						mnemonic_stream[255-mptr*8 -: 40] = " %rsp"; 
+						mptr = mptr + 5;
 					end		
 			8'h55:  
 					begin
 						mnemonic_stream[255-mptr*8 -: 40] = " %rbp"; 
+						mptr = mptr + 5;
 					end		
 			8'h56:
 					begin
 						mnemonic_stream[255-mptr*8 -: 40] = " %rsi"; 
+						mptr = mptr + 5;
 					end		
 			8'h57: 
 					begin
 						mnemonic_stream[255-mptr*8 -: 40] = " %rdi"; 
+						mptr = mptr + 5;
 					end		
 			8'h58: 
 					begin
-						mnemonic_stream[255-mptr*8 -: 40] = " %rcx"; 
+						mnemonic_stream[255-mptr*8 -: 40] = " %rax"; 
+						mptr = mptr + 5;
 					end		
 			8'h59:
 					begin
-						mnemonic_stream[255-mptr*8 -: 40] = " %rdx"; 
+						mnemonic_stream[255-mptr*8 -: 40] = " %rcx"; 
+						mptr = mptr + 5;
 					end		
 			8'h5a: 
 					begin
-						mnemonic_stream[255-mptr*8 -: 40] = " %rbx"; 
+						mnemonic_stream[255-mptr*8 -: 40] = " %rdx"; 
+						mptr = mptr + 5;
 					end		
 			8'h5b:
 					begin
-						mnemonic_stream[255-mptr*8 -: 40] = " %rsp"; 
+						mnemonic_stream[255-mptr*8 -: 40] = " %rbx"; 
+						mptr = mptr + 5;
 					end		
 			8'h5c:  
 					begin
-						mnemonic_stream[255-mptr*8 -: 40] = " %rbp"; 
+						mnemonic_stream[255-mptr*8 -: 40] = " %rsp"; 
+						mptr = mptr + 5;
 					end		
 			8'h5d:
 					begin
-						mnemonic_stream[255-mptr*8 -: 40] = " %rsi"; 
+						mnemonic_stream[255-mptr*8 -: 40] = " %rbp"; 
+						mptr = mptr + 5;
 					end		
 			8'h5e: 
 					begin
-						mnemonic_stream[255-mptr*8 -: 40] = " %rdi"; 
+						mnemonic_stream[255-mptr*8 -: 40] = " %rsi"; 
+						mptr = mptr + 5;
 					end		
-			8'h5f: ;
+			8'h5f: 
+					begin
+						mnemonic_stream[255-mptr*8 -: 40] = " %rdi"; 
+						mptr = mptr + 5;
+					end		
 			8'h60: ;
 			8'h61: ;
 			8'h62: ;
@@ -717,13 +780,72 @@ task decode_instr;
 			8'h80: ;
 			8'h81: ;
 			8'h82: ;
-			8'h83: ;
+			8'h83: 
+				begin
+					case(reg1[2:0])
+						3'b000: 
+						mnemonic_stream[255-mptr*8 -: 24] = "ADD";
+						3'b001:
+						mnemonic_stream[255-mptr*8 -: 24] = "OR";
+						3'b010:
+						mnemonic_stream[255-mptr*8 -: 24] = "ADC";
+						3'b011:
+						mnemonic_stream[255-mptr*8 -: 24] = "SBB";
+						3'b100:
+						mnemonic_stream[255-mptr*8 -: 24] = "AND";
+						3'b101:
+						mnemonic_stream[255-mptr*8 -: 24] = "SUB";
+						3'b110:
+						mnemonic_stream[255-mptr*8 -: 24] = "XOR";
+						3'b111:
+						mnemonic_stream[255-mptr*8 -: 24] = "CMP";
+					endcase
+					mptr = mptr + 3;
+					mptr = mptr + 1;
+					mnemonic_stream[255-mptr*8 -: 32] = ereg[31:0];  
+					mptr = mptr + 4;
+					mnemonic_stream[255-mptr*8 -: 8] = ",";
+					mptr = mptr + 1;
+			
+					//mnemonic_stream[255-mptr*8 -: 16]=out2[15:0];
+					//mptr = mptr + 3;
+					
+					
+            		imm64_bytes[7:0]=$signed(buffer[byte_incr*8 +: 8]);
+            		immediate[63:0] ={ {56{imm64_bytes[7]}} , imm64_bytes[7:0] };
+
+					for(int i=0;i<8;i++) begin
+						toascii(out2,immediate[8*i +: 8]);
+						$display("%s %d",out2,i);
+						mnemonic_stream[255-mptr*8 -: 16]=out2[15:0];
+						mptr = mptr + 2;
+					end
+					
+
+					imm_1byte[7:0] =  buffer[byte_incr*8 +: 8];
+					toascii(out1,imm_1byte);
+					opcode_stream[191-optr*8 -: 16] = out1[15:0];
+					optr = optr + 3;
+					byte_incr = byte_incr + 1;
+			end
 			8'h84: ;
 			8'h85: ;
 			8'h86: ;
 			8'h87: ;
 			8'h88: ;
-			8'h89: ;
+			8'h89: 
+				begin
+					mptr = mptr + 4;
+					mnemonic_stream[255-mptr*8 -: 32] = ereg[31:0];  
+					mptr = mptr + 4;
+					mnemonic_stream[255-mptr*8 -: 8] = ",";
+					mptr = mptr + 1;
+					mnemonic_stream[255-mptr*8 -: 32] = greg[31:0];
+					mptr = mptr + 4;
+					if (dispsize[4:0] != 5'b0) begin
+					
+					end 
+				end
 			8'h8a: ;
 			8'h8b: ;
 			8'h8c: ;
@@ -868,35 +990,38 @@ task decode;
 		mptr[7:0] = 8'b0;
 		next_fld_type = LEGACY_PREFIX;
 		offs = 0;
+		offs2=offs;
 		if ((next_fld_type & LEGACY_PREFIX) == LEGACY_PREFIX ) begin
 			check_legacy_prefix(offs2,next_fld_type,offs);
 		end
 
+		offs3=offs2;
 		if ((next_fld_type & REX_PREFIX) == REX_PREFIX ) begin
 			check_rex_prefix(offs3,next_fld_type,offs2);
 		end
 
+		offs4=offs3;
 		if ((next_fld_type & OPCODE) == OPCODE ) begin
 			check_opcode(offs4,next_fld_type,offs3);
-            offs7=offs4;
 		end
 
+		offs5=offs4;
 		if ((next_fld_type & MOD_RM) == MOD_RM ) begin
-			check_modrm(offs5,next_fld_type,offs7);
-			offs7 = offs5;
+			check_modrm(offs5,next_fld_type,offs4);
 		end
+		offs6=offs5;
 
 		if ((next_fld_type & SIB) == SIB ) begin
-			check_sib(offs6,next_fld_type,offs7);
-			offs7 = offs6;
+			check_sib(offs7,next_fld_type,offs6);
 		end
+		offs7=offs6;
 
 		if ((next_fld_type & DISPLACEMENT) == DISPLACEMENT) begin
 			check_disp(offs8,next_fld_type,offs7);
-			offs7 = offs8;
 		end
+		offs8=offs7;
 		
-        increment_by = offs7;
+        increment_by = offs8;
 		byte_incr = increment_by;
 	
 		if (num_inst_bytes == 2'b01)

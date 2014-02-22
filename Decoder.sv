@@ -124,7 +124,15 @@ task check_opcode;
 
 	begin
 		inc = 1;
-        if (buffer[inst_byte_offset*8 +: 8]==8'h0f) begin
+        if (buffer[inst_byte_offset*8 +: 8]==8'h00) begin
+				
+        	if (buffer[inst_byte_offset*8 +: 24]==24'h00) begin
+				opcode_stream[191-optr*8 -: 64] = "00 00 00"; 
+				optr = optr + 8;	
+				next_field_type = LEGACY_PREFIX;
+			end
+		end
+        else if (buffer[inst_byte_offset*8 +: 8]==8'h0f) begin
             inst_byte_offset=inst_byte_offset+1;
 			inc = inc + 1;
 		    //$display("Opcode 2: 0x%x", buffer[inst_byte_offset*8 +: 8]);	
@@ -347,6 +355,7 @@ task check_disp;
 	logic[7:0] disp8_bytes;
 	logic[7:0] disp_opcode;
 	logic[15:0] out1;
+	//logic[7:0] imm64_bytes;
     
     begin
         inc=0;
@@ -377,12 +386,12 @@ endtask
 
 task decode_instr;
 	
-//	logic [63:0] immediate;
-//	logic [7:0] imm64_bytes;
+	logic [63:0] immediate;
+	logic [39:0] imm64_bytes;
 	logic [63:0] imm;
-//	logic [7:0] imm_1byte;
-//	logic [15:0] out1;
-//	logic [15:0] out2;
+	logic [7:0] imm_1byte;
+	logic [15:0] out1;
+	logic [15:0] out2;
 
 	begin
 		case (instr[7:0])
@@ -746,7 +755,7 @@ task decode_instr;
 			8'h82: ;
 			8'h83:
 				begin
-					handle_immediate();
+					handle_immediate(3'b001);
 				end
 			8'h84: ;
 			8'h85: ;
@@ -823,9 +832,30 @@ task decode_instr;
 			8'hbd: ;
 			8'hbe: ;
 			8'hbf:
-				begin
-			 		get_reg();
+			begin
+				mnemonic_stream[255-mptr*8 -: 24] = "$0x";
+				mptr = mptr + 3;
+				imm64_bytes[39:0]=$signed(buffer[byte_incr*8 +: 40]);
+				immediate[63:0] ={ {24{imm64_bytes[39]}} , imm64_bytes[39:0] };
+				for(int i=0;i<=4;i++) begin
+					toascii(out2,immediate[8*i +: 8]);
+					mnemonic_stream[255-mptr*8 -: 16]=out2[15:0];
+					mptr = mptr + 2;
 				end
+				mnemonic_stream[255-mptr*8 -: 8] = ","; 
+				mptr = mptr + 1;
+				mnemonic_stream[255-mptr*8 -: 32] = "%rdi"; 
+				mptr = mptr + 4;
+				
+				for(int i=0;i<=4;i++) begin
+					imm_1byte[7:0] =  buffer[byte_incr*8 +: 8];
+					toascii(out1,imm_1byte);
+					opcode_stream[191-optr*8 -: 16] = out1[15:0];
+					optr = optr + 3;
+					byte_incr = byte_incr + 1;
+				end
+
+			end
 			8'hc0: ;
 			8'hc1: ;
 			8'hc2: ;
@@ -1493,9 +1523,12 @@ end
 endtask
 
 task handle_immediate;
+	input logic[2:0] num_imm_bytes;
 
 	logic [63:0] immediate;
 	logic [7:0] imm64_bytes;
+	logic [31:0] imm64_bytes_32;
+	logic [39:0] imm64_bytes_40;
 	//logic [63:0] imm;
 	logic [7:0] imm_1byte;
 	logic [15:0] out1;
@@ -1527,9 +1560,18 @@ task handle_immediate;
 		mnemonic_stream[255-mptr*8 -: 24] = "$0x";
 		mptr = mptr + 3;
 
-
-		imm64_bytes[7:0]=$signed(buffer[byte_incr*8 +: 8]);
-		immediate[63:0] ={ {56{imm64_bytes[7]}} , imm64_bytes[7:0] };
+		if (num_imm_bytes[2:0] == 3'b1) begin
+			imm64_bytes[7:0]=$signed(buffer[byte_incr*8 +: 8]);
+			immediate[63:0] ={ {56{imm64_bytes[7]}} , imm64_bytes[7:0] };
+		end
+		else  if (num_imm_bytes[2:0] == 3'd4) begin 
+			imm64_bytes_32[31:0]=$signed(buffer[byte_incr*8 +: 32]);
+			immediate[63:0] ={ {32{imm64_bytes[7]}} , imm64_bytes_32[31:0] };
+		end 
+		else  if (num_imm_bytes[2:0] == 3'd5) begin 
+			imm64_bytes_40[39:0]=$signed(buffer[byte_incr*8 +: 40]);
+			immediate[63:0] ={ {24{imm64_bytes[7]}} , imm64_bytes_40[39:0] };
+		end
 
 		for(int i=1;i<=8;i++) begin
 			toascii(out2,immediate[8*i +: 8]);

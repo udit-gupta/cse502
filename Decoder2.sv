@@ -18,10 +18,10 @@ module Decoder2(
 //logic[255:0] immediate;
 logic[0:15*8-1] buffer;
 logic[7:0] instr;
-//logic [3:0] rex_bits;
+logic [3:0] rex_bits;
 //logic[7:0] modrm;
 ////logic [0:0] RR_addr;
-//logic [0:0] RM;
+logic [0:0] RM;
 //// Output strings
 logic [7:0] optr;
 logic [7:0] mptr;
@@ -70,19 +70,51 @@ task check_legacy_prefix;
 endtask
 
 
-//task check_rex_prefix;
-//	output logic[3:0] next_byte_offset;
-//	output inst_field_t next_field_type;
-//	input logic[3:0] inst_byte_offset;
-////	logic[7:0] ibyte;
-////	logic[15:0] out;
-////	logic[3:0] inc;
-//
-//	begin
-//		// Suppress the warnings
-//		if (next_byte_offset[3:0] == 0);
-//	end
-//endtask
+task check_rex_prefix;
+	output logic[3:0] next_byte_offset;
+	output inst_field_t next_field_type;
+	input logic[3:0] inst_byte_offset;
+	logic[7:0] ibyte;
+	logic[15:0] out;
+	logic[3:0] inc;
+
+	begin
+		inc = 4'd1; 
+		// $display("Byte: 0x%x", buffer[inst_byte_offset*8 +: 8]);
+		ibyte[7:0] = buffer[inst_byte_offset*8 +: 8];
+
+		if (ibyte[7:4] == 4'b0100) begin
+			$display("REX prefix");
+//			if (rex_bits[3] == 1'b1)
+//				$display("REX: 64 bit operand size");
+//			if (rex_bits[2] == 1'b1)
+//				$display("REX: Mod R/M reg field");
+//			if (rex_bits[1] == 1'b1)
+//				$display("REX: SIB extension field present");
+//			if (rex_bits[0] == 1'b1)
+//				$display("REX: ModR/M or SIB or Opcode reg");
+			rex_bits[3:0] = ibyte[3:0];
+			if (rex_bits[2] == 1'b1)
+				RM = 1'b1; 
+			inc = 4'd1;
+			toascii(out,ibyte[7:0]);
+			opcode_stream[191-optr*8 -: 16] = out;
+			optr = optr + 3;
+		end
+		else begin
+			$display("Not a REX prefix");
+			inc = 4'd0;
+			rex_bits[3:0] = 4'b0;
+		end
+
+		next_byte_offset = inst_byte_offset + inc;
+		next_field_type = OPCODE;
+
+		// To suprress errors
+		if (rex_bits[3:0] == 0);
+		if (RM == 0);
+	end
+endtask
 
 
 //task check_opcode;
@@ -193,9 +225,9 @@ task decode;
 		end
 
 		offs3 = offs2;
-//		if ((next_fld_type & REX_PREFIX) == REX_PREFIX ) begin
-//			check_rex_prefix(offs3,next_fld_type,offs2);
-//		end
+		if ((next_fld_type & REX_PREFIX) == REX_PREFIX ) begin
+			check_rex_prefix(offs3,next_fld_type,offs2);
+		end
 
 		offs4 = offs3;
 //		if ((next_fld_type & OPCODE) == OPCODE ) begin

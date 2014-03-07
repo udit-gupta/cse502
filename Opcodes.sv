@@ -9,12 +9,12 @@ initial begin
 
 	//opcode mnemonics
 
-op[0] =   "        " ;
-op[1] =   "        " ;
-op[2] =   "        " ;
-op[3] =   "        " ;
-op[4] =   "        " ;
-op[5] =   "        " ;
+op[0] =   "ADD     " ;
+op[1] =   "ADD     " ;
+op[2] =   "ADD     " ;
+op[3] =   "ADD     " ;
+op[4] =   "ADD     " ;
+op[5] =   "ADD     " ;
 op[6] =   "PUSH    " ;
 op[7] =   "POP     " ;
 op[8] =   "OR      " ;
@@ -209,10 +209,10 @@ op[196] = "LES     " ;
 op[197] = "LDS     " ;
 op[198] = "MOV     " ;
 op[199] = "MOV     " ;
-op[200] = "ENTER   " ;
-op[201] = "LEAVE   " ;
+op[200] = "ADD     " ;
+op[201] = "ADD     " ;
 op[202] = "RET     " ;
-op[203] = "RET     " ;
+op[203] = "ADD     " ;
 op[204] = "INT3    " ;
 op[205] = "INT     " ;
 op[206] = "INTO    " ;

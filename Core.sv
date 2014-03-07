@@ -72,17 +72,22 @@ module Core (
 
 	logic[3:0] bytes_decoded_this_cycle;
 
-//	typedef logic[63:0] mystring;
-//	mystring op[0:255];
-//	mystring op2[0:255];
-//	logic [255:0] ModRM;
-//	logic [255:0] ModRM2;
+	typedef logic[63:0] mystring;
+	mystring op[0:255];
+	mystring op2[0:255];
+	logic [255:0] ModRM;
+	logic [255:0] ModRM2;
 	logic[191:0] opcode_stream;
 	logic[255:0] mnemonic_stream;
-//	Opcodes opc(op,ModRM);
-//	Opcodes2 opc2(op2,ModRM2);
+	logic[22:0] inst_info[255];
+	Opcodes opc(op,ModRM);
+	Opcodes2 opc2(op2,ModRM2);
+	InstrnInfo iinfo(inst_info);
+
 	//Decoder D(bytes_decoded_this_cycle, bus, opcode_stream, mnemonic_stream, current_addr, decode_bytes,op,op2,ModRM,ModRM2);
-	Decoder2 D(bytes_decoded_this_cycle, opcode_stream, mnemonic_stream, current_addr, decode_bytes);
+	Decoder2 D(bytes_decoded_this_cycle, opcode_stream, mnemonic_stream, current_addr, decode_bytes,op,op2,ModRM,ModRM2);
+   // Decoder2 D(bytes_decoded_this_cycle, opcode_stream, mnemonic_stream, current_addr, decode_bytes);
+
 
 	always_comb begin
 		if (can_decode) begin : decode_block
@@ -97,6 +102,10 @@ module Core (
 	//		$display("bytes_decoded_this_cycle : %d", bytes_decoded_this_cycle); 
 	//		$display("bytes_decoded_this_cycle : %d", bytes_decoded_this_cycle); 
 			
+
+			if (ModRM[255:0] == 0);
+			if (ModRM2[255:0] == 0);
+			if (inst_info[22:0] == 0);
 			// cse502 : following is an example of how to finish the simulation
 			if (decode_bytes == 0 && fetch_state == fetch_idle) $finish;
 		end else begin

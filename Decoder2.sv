@@ -58,6 +58,8 @@ task decode_instr;
 
     begin        
         $display("\n");
+		incr1 = 4'b0; 
+		incr2 = 4'b0; 
         flag1=1'b0;
         flag2=1'b0;
         bo[31:0] = 32'b0;

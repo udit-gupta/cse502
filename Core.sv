@@ -95,14 +95,21 @@ module Core (
 	Decoder2 D(bytes_decoded_this_cycle, opcode_stream, mnemonic_stream, current_addr, decode_bytes,op,op2,ModRM,ModRM2,inst_info);
 
 	always_comb begin
+		//$display("can_decode: %x, decode_offset: %x, fetch_offset: %x", can_decode, decode_offset, fetch_offset);
 		if (can_decode) begin : decode_block
 			// cse502 : Decoder here
 			// remove the following line. It is only here to allow successful compilation in the absence of your code.
-			if (decode_bytes == 0) ;
+//			if (decode_bytes == 0) ;
 			bytes_decoded_this_cycle = 0;
 	//		$display("\n");
 	//		$display("Buffer =>: 0x%x", decode_bytes);
 			//bytes_decoded_this_cycle = 4'b1111;
+
+			if (decode_bytes[0:119] == 120'b0 ) begin 
+				$finish;
+			end
+			else begin 
+
 			D.decode(bytes_decoded_this_cycle);
 	//		$display("bytes_decoded_this_cycle : %d", bytes_decoded_this_cycle); 
 	//		$display("bytes_decoded_this_cycle : %d", bytes_decoded_this_cycle); 
@@ -111,8 +118,17 @@ module Core (
 			if (ModRM[255:0] == 0);
 			if (ModRM2[255:0] == 0);
 			if (inst_info[22:0] == 0);
+			if (mnemonic_stream[255:0] == 0);
+			if (opcode_stream[191:0] == 0);
+			if (alu_res[63:0] == 0);
+
 			// cse502 : following is an example of how to finish the simulation
-			if (decode_bytes == 0 && fetch_state == fetch_idle) $finish;
+			$display("decode_bytes: %x", decode_bytes);
+			$display("fetch_state: %x", fetch_idle);
+			//if (decode_bytes == 0 && fetch_state == fetch_idle) $finish;
+			//if (decode_bytes[0:119] == 120'b0 || fetch_state == fetch_idle) $finish;
+			//if (decode_bytes[0:119] == 120'b0 ) $finish;
+			end
 		end else begin
 			bytes_decoded_this_cycle = 0;
 		end
@@ -139,8 +155,8 @@ module Core (
 			oper1 <= 64'd12;
 			oper2 <= 64'd23;
 				
-			$display("%x: %s %s", current_addr[63:0], opcode_stream[191:0],mnemonic_stream[255:0]); 
-			$display("ALU Result: %b", alu_res);
+			//$display("%x: %s %s", current_addr[63:0], opcode_stream[191:0],mnemonic_stream[255:0]); 
+			//$display("ALU Result: %b", alu_res);
 		end
 
 	// cse502 : Use the following as a guide to print the Register File contents.

@@ -38,11 +38,21 @@ typedef enum {
 } inst_field_t; 
 
 
+typedef enum {
+	REGISTER,
+	MEOMORY,
+	IMM
+} operand_t;
+
 // TODO: Legacy prefix : no actions defined: low prioirity 
 
 
 task decode_instr;
 	output logic[3:0] next_byte_offset;
+	output operand_t src_type;
+	output operand_t dest_type;
+	output logic[63:0] src_val;
+	output logic[63:0] dest_val;
 	input logic[3:0]  inst_byte_offset;
 	//output inst_field_t next_field_type;    
     logic[22:0] instr_info=inst_info[instr];
@@ -76,24 +86,44 @@ task decode_instr;
 
          
         case(instr_info[20:19])
-            2'b00: $display("Op1:register");
-            2'b01: $display("Op1:R/M");
+			2'b00: begin 
+						$display("Op1:register");
+						dest_type = REGISTER;
+				  end
+		   2'b01: begin
+					  $display("Op1:R/M");
+					  dest_type = REGISTER;				
+				  end
             2'b10: begin
                         flag1=1'b1;
                         $display("Op1:IMMEDIATE");
+						dest_type = IMM;
                    end
-            2'b11: $display("Op1:fix operand");
+		    2'b11: begin 
+				      $display("Op1:fix operand");
+					  dest_type = REGISTER;
+				 end
             default: $display("Op1:Error in numop recognition !!");
         endcase
         
         case(instr_info[18:17])
-            2'b00: $display("Op2:register");
-            2'b01: $display("Op2:R/M");
+			2'b00: begin
+					$display("Op2:register");
+					src_type = REGISTER;
+				end
+			2'b01: begin
+					$display("Op2:R/M");
+					src_type = REGISTER;
+				end
             2'b10: begin
                         flag2=1'b1;
-                        $display("Op2:IMMEDIATE");
+                        $display("Op2:IMM");
+					 src_type = IMMEDIATE;
                    end
-            2'b11: $display("Op2:fix operand");
+		   2'b11: begin
+				$display("Op2:fix operand");
+				src_type = REGISTER;
+			end
             default: $display("Op2:Error in op1 recognition !!");
         endcase
         
@@ -102,6 +132,7 @@ task decode_instr;
                         if(flag1==1'b1) begin
                             incr1=4'd1;
                             ibyte[7:0] = buffer[bo*8 +: 8];
+							dest_val[63:0] = { 56'b0,  buffer[bo*8 +: 8]};
 		                    toascii(out,ibyte[7:0]);
 		                    opcode_stream[191-optr*8 -: 16] = out;
 		                    optr = optr + 3;
@@ -112,8 +143,8 @@ task decode_instr;
             2'b01: begin
                         if(flag1==1'b1) begin
                             incr1=4'd2;
+							dest_val[63:0] = { 48'b0,  buffer[bo*8 +: 16]};
                             // 1
-                            ibyte[7:0] = buffer[bo*8 +: 8];
 		                    toascii(out,ibyte[7:0]);
 		                    opcode_stream[191-optr*8 -: 16] = out;
 		                    optr = optr + 3;
@@ -134,6 +165,7 @@ task decode_instr;
                         if(flag1==1'b1) begin
                             incr1=4'd4;
 
+							dest_val[63:0] = { 32'b0,  buffer[bo*8 +: 32]};
                             // 1
                             ibyte[7:0] = buffer[bo*8 +: 8];
 		                    toascii(out,ibyte[7:0]);
@@ -169,6 +201,7 @@ task decode_instr;
                         if(flag1==1'b1) begin
                             incr1=4'd8;
 
+							dest_val[63:0] = buffer[bo*8 +: 64];
                             // 1
                             ibyte[7:0] = buffer[bo*8 +: 8];
 		                    toascii(out,ibyte[7:0]);
@@ -237,6 +270,7 @@ task decode_instr;
                         if(flag2==1'b1) begin 
                             incr2=4'd1;
                             ibyte[7:0] = buffer[bo*8 +: 8];
+							src_val[63:0] = { 56'b0,  buffer[bo*8 +: 8]};
 		                    toascii(out,ibyte[7:0]);
 		                    opcode_stream[191-optr*8 -: 16] = out;
 		                    optr = optr + 3;
@@ -248,6 +282,7 @@ task decode_instr;
                         if(flag2==1'b1) begin 
                             incr2=4'd2;
 
+							dest_val[63:0] = { 48'b0,  buffer[bo*8 +: 16]};
                             // 1
                             ibyte[7:0] = buffer[bo*8 +: 8];
 		                    toascii(out,ibyte[7:0]);
@@ -268,6 +303,7 @@ task decode_instr;
                         if(flag2==1'b1) begin 
                             incr2=4'd4;
 
+							src_val[63:0] = { 32'b0,  buffer[bo*8 +: 32]};
                             // 1
                             ibyte[7:0] = buffer[bo*8 +: 8];
 		                    toascii(out,ibyte[7:0]);
@@ -302,6 +338,7 @@ task decode_instr;
                         if(flag2==1'b1) begin 
                             incr2=4'd8;
 
+							src_val[63:0] = buffer[bo*8 +: 64];
                             // 1
                             ibyte[7:0] = buffer[bo*8 +: 8];
 		                    toascii(out,ibyte[7:0]);
@@ -364,17 +401,28 @@ task decode_instr;
         endcase
             $display("Increment2 : %d", incr2);
 
-        case(instr_info[12:9])
-            default:$display("Op1RegNo: %b", instr_info[12:9]);
-           // default: $display("Error in op1regno recognition !!");
-        endcase
+//        case(instr_info[12:9])
+//            default:$display("Op1RegNo: %b", instr_info[12:9]);
+//           // default: $display("Error in op1regno recognition !!");
+//        endcase
+//
+//
+//        case(instr_info[8:5])
+//            default:$display("Op2RegNo: %b", instr_info[9:6]);
+//           // default: $display("Error in op2regno recognition !!");
+//        endcase
+//
 
+		 if (dest_type == REGISTER ) begin
+            $display("Op1RegNo: %b", instr_info[12:9]);
+			dest_val[63:0] = { 60'b0  , instr_info[12:9]};
+			
+		 end
 
-        case(instr_info[8:5])
-            default:$display("Op2RegNo: %b", instr_info[9:6]);
-           // default: $display("Error in op2regno recognition !!");
-        endcase
-
+		 if (src_type == REGISTER ) begin
+           $display("Error in op2regno recognition !!");
+			src_val[63:0] = { 60'b0  , instr_info[8:5]};
+		 end
 
         case(instr_info[4:0])
             default:$display("Group Bytes: %b", instr_info[6:1]);
@@ -729,6 +777,10 @@ endtask
 
 task decode;
 	output logic[3:0] increment_by;
+	output operand_t src_type;
+	output operand_t dest_type;
+	output logic[63:0] src_val;
+	output logic[63:0] dest_val;
 	logic[3:0] offs;
 	logic[3:0] offs2;
 	logic[3:0] offs3;
@@ -783,14 +835,13 @@ task decode;
 
 
 		if (num_inst_bytes == 2'b01)
-			decode_instr(offs8,offs7);
+			decode_instr(offs8,src_type, dest_type, src_val, dest_val, offs7);
 //		else
 //			decode_instr2(offs8,offs7);
 		// TODO: handle two byte opcodes
 
         increment_by = offs8;
 		byte_incr = increment_by;
-	
 
 		// To suppress errors
 		if (mnemonic_stream == 0);

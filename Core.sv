@@ -103,10 +103,19 @@ module Core (
 	logic[63:0] oper2;
 	logic[7:0] oper;
 	logic[63:0] alu_res;
+	logic[63:0] src_vl;
+	logic[63:0] dest_vl;
+	typedef enum {
+		REGISTER,
+		MEOMORY,
+		IMM
+	} operand_t;
+
+	operand_t src_ty;
+	operand_t dest_ty;
 	Opcodes opc(op,ModRM);
 	Opcodes2 opc2(op2,ModRM2);
 	InstrnInfo iinfo(inst_info);
-
 
 
 	//Decoder D(bytes_decoded_this_cycle, bus, opcode_stream, mnemonic_stream, current_addr, decode_bytes,op,op2,ModRM,ModRM2);
@@ -129,7 +138,7 @@ module Core (
 			end
 			else begin 
 
-			D.decode(bytes_decoded_this_cycle);
+			D.decode(bytes_decoded_this_cycle,src_ty,dest_ty,src_vl,dest_vl);
 	//		$display("bytes_decoded_this_cycle : %d", bytes_decoded_this_cycle); 
 	//		$display("bytes_decoded_this_cycle : %d", bytes_decoded_this_cycle); 
 		
@@ -140,6 +149,10 @@ module Core (
 			if (mnemonic_stream[255:0] == 0);
 			if (opcode_stream[191:0] == 0);
 			if (alu_res[63:0] == 0);
+			if (src_vl == 0);
+			if (dest_vl == 0);
+			if (src_ty == 0);
+			if (dest_ty == 0);
 
 			// cse502 : following is an example of how to finish the simulation
 			$display("decode_bytes: %x", decode_bytes);

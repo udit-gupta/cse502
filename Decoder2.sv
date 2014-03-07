@@ -533,7 +533,7 @@ task check_opcode;
 
 	begin
 		inc = 1;
-        if (buffer[inst_byte_offset*8 +: 8]==8'h00) begin
+      /*  if (buffer[inst_byte_offset*8 +: 8]==8'h00) begin
 				
         	if (buffer[inst_byte_offset*8 +: 24]==24'h00) begin
 				opcode_stream[191-optr*8 -: 64] = "00 00 00"; 
@@ -541,7 +541,8 @@ task check_opcode;
 				next_field_type = LEGACY_PREFIX;
 			end
 		end
-        else if (buffer[inst_byte_offset*8 +: 8]==8'h0f) begin
+        else */
+		if (buffer[inst_byte_offset*8 +: 8]==8'h0f) begin
             inst_byte_offset=inst_byte_offset+1;
 			inc = inc + 1;
 		    //$display("Opcode 2: 0x%x", buffer[inst_byte_offset*8 +: 8]);	
@@ -774,19 +775,22 @@ task decode;
 //		end
 		offs7 = offs6;
 
+		// TODO: Handle displacement
 //		if ((next_fld_type & DISPLACEMENT) == DISPLACEMENT) begin
 //			check_disp(offs8,next_fld_type,offs7);
 //		end
-	//	offs8 = offs7;
+		offs8 = offs7;
 
-		decode_instr(offs8,offs7);
+
+		if (num_inst_bytes == 2'b01)
+			decode_instr(offs8,offs7);
+//		else
+//			decode_instr2(offs8,offs7);
+		// TODO: handle two byte opcodes
 
         increment_by = offs8;
 		byte_incr = increment_by;
 	
-//		if (num_inst_bytes == 2'b01)
-//		else
-//			decode_instr2();
 
 		// To suppress errors
 		if (mnemonic_stream == 0);

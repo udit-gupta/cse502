@@ -80,14 +80,20 @@ module Core (
 	logic[191:0] opcode_stream;
 	logic[255:0] mnemonic_stream;
 	logic[22:0] inst_info[255];
+	logic[63:0] oper1;
+	logic[63:0] oper2;
+	logic[7:0] oper;
+	logic[63:0] alu_res;
 	Opcodes opc(op,ModRM);
 	Opcodes2 opc2(op2,ModRM2);
 	InstrnInfo iinfo(inst_info);
 
+
+
 	//Decoder D(bytes_decoded_this_cycle, bus, opcode_stream, mnemonic_stream, current_addr, decode_bytes,op,op2,ModRM,ModRM2);
 	Decoder2 D(bytes_decoded_this_cycle, opcode_stream, mnemonic_stream, current_addr, decode_bytes,op,op2,ModRM,ModRM2);
+	ALU alu(alu_res,oper1,oper2,oper);
    // Decoder2 D(bytes_decoded_this_cycle, opcode_stream, mnemonic_stream, current_addr, decode_bytes);
-
 
 	always_comb begin
 		if (can_decode) begin : decode_block
@@ -101,7 +107,7 @@ module Core (
 			D.decode(bytes_decoded_this_cycle);
 	//		$display("bytes_decoded_this_cycle : %d", bytes_decoded_this_cycle); 
 	//		$display("bytes_decoded_this_cycle : %d", bytes_decoded_this_cycle); 
-			
+		
 
 			if (ModRM[255:0] == 0);
 			if (ModRM2[255:0] == 0);
@@ -119,6 +125,9 @@ module Core (
 			decode_offset <= 0;
 			decode_buffer <= 0;
 			current_addr <= entry;
+			oper1 <= 0;
+			oper2 <= 0;
+			oper <= 0;
 
 		end else begin // !bus.reset
 
@@ -127,8 +136,12 @@ module Core (
 //			$display("Buffer =>: 0x%x", decode_bytes);
 //			$display("Offset after: %x", decode_offset);
 //			$display(" < ---------------------------------------------------------------------------------------------- > ");
+			oper <= 8'h2A;
+			oper1 <= 64'd12;
+			oper2 <= 64'd23;
 				
 			$display("%x: %s %s", current_addr[63:0], opcode_stream[191:0],mnemonic_stream[255:0]); 
+			$display("ALU Result: %b", alu_res);
 		end
 
 	// cse502 : Use the following as a guide to print the Register File contents.

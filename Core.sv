@@ -8,6 +8,8 @@ module Core (
 	logic[5:0] fetch_skip;
 	logic[6:0] fetch_offset, decode_offset;
 	logic[63:0] current_addr = entry[63:0];
+	typedef enum { RAX, RCX, RDX, RBX, RSP, RBP, RSI, RDI, R8, R9, R10, R11, R12, R13, R14, R15 } regname;
+	logic[63:0] xreg[16];
 
 	function logic mtrr_is_mmio(logic[63:0] physaddr);
 		mtrr_is_mmio = ((physaddr > 640*1024 && physaddr < 1024*1024));
@@ -33,6 +35,23 @@ module Core (
 			fetch_rip <= entry & ~63;
 			fetch_skip <= entry[5:0];
 			fetch_offset <= 0;
+
+			xreg[RAX] <= 64'hdeadbeefdeadbeef ; 
+			xreg[RCX] <= 64'hdeadbeefdeadbeef ; 
+			xreg[RDX] <= 64'hdeadbeefdeadbeef ; 
+			xreg[RBX] <= 64'hdeadbeefdeadbeef ; 
+			xreg[RSP] <= 64'hdeadbeefdeadbeef ; 
+			xreg[RBP] <= 64'hdeadbeefdeadbeef ; 
+			xreg[RSI] <= 64'hdeadbeefdeadbeef ; 
+			xreg[RDI] <= 64'hdeadbeefdeadbeef ; 
+			xreg[R8]  <= 64'hdeadbeefdeadbeef ; 
+			xreg[R9]  <= 64'hdeadbeefdeadbeef ; 
+			xreg[R10] <= 64'hdeadbeefdeadbeef ; 
+			xreg[R11] <= 64'hdeadbeefdeadbeef ; 
+			xreg[R12] <= 64'hdeadbeefdeadbeef ; 
+			xreg[R13] <= 64'hdeadbeefdeadbeef ; 
+			xreg[R14] <= 64'hdeadbeefdeadbeef ; 
+			xreg[R15] <= 64'hdeadbeefdeadbeef ; 
 
 		end else begin // !bus.reset
 
@@ -161,21 +180,21 @@ module Core (
 
 	// cse502 : Use the following as a guide to print the Register File contents.
 	final begin
-		$display("RAX = %x", 0);
-		$display("RBX = %x", 0);
-		$display("RCX = %x", 0);
-		$display("RDX = %x", 0);
-		$display("RSI = %x", 0);
-		$display("RDI = %x", 0);
-		$display("RBP = %x", 0);
-		$display("RSP = %x", 0);
-		$display("R8 = %x", 0);
-		$display("R9 = %x", 0);
-		$display("R10 = %x", 0);
-		$display("R11 = %x", 0);
-		$display("R12 = %x", 0);
-		$display("R13 = %x", 0);
-		$display("R14 = %x", 0);
-		$display("R15 = %x", 0);
+		$display("RAX = %x", xreg[RAX]);
+		$display("RBX = %x", xreg[RBX]);
+		$display("RCX = %x", xreg[RCX]);
+		$display("RDX = %x", xreg[RDX]);
+		$display("RSI = %x", xreg[RSI]);
+		$display("RDI = %x", xreg[RDI]);
+		$display("RBP = %x", xreg[RBP]);
+		$display("RSP = %x", xreg[RSP]);
+		$display("R8 = %x", xreg[R8]);
+		$display("R9 = %x", xreg[R9]);
+		$display("R10 = %x", xreg[R10]);
+		$display("R11 = %x", xreg[R11]);
+		$display("R12 = %x", xreg[R12]);
+		$display("R13 = %x", xreg[R13]);
+		$display("R14 = %x", xreg[R14]);
+		$display("R15 = %x", xreg[R15]);
 	end
 endmodule

@@ -85,7 +85,7 @@ module Core (
 	InstrnInfo iinfo(inst_info);
 
 	//Decoder D(bytes_decoded_this_cycle, bus, opcode_stream, mnemonic_stream, current_addr, decode_bytes,op,op2,ModRM,ModRM2);
-	Decoder2 D(bytes_decoded_this_cycle, opcode_stream, mnemonic_stream, current_addr, decode_bytes,op,op2,ModRM,ModRM2);
+	Decoder2 D(bytes_decoded_this_cycle, opcode_stream, mnemonic_stream, current_addr, decode_bytes,op,op2,ModRM,ModRM2,inst_info);
    // Decoder2 D(bytes_decoded_this_cycle, opcode_stream, mnemonic_stream, current_addr, decode_bytes);
 
 

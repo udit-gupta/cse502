@@ -7,7 +7,8 @@ module Decoder2(
 	input logic[63:0] op[0:255],
 	input logic[63:0] op2[0:255],
 	input logic[255:0] ModRM,
-	input logic[255:0] ModRM2
+	input logic[255:0] ModRM2,
+	input logic[22:0] inst_info[255]
 );
 
 // 'State' for the current instruction 
@@ -38,6 +39,355 @@ typedef enum {
 
 
 // TODO: Legacy prefix : no actions defined: low prioirity 
+
+
+task decode_instr;
+	output logic[3:0] next_byte_offset;
+	input logic[3:0]  inst_byte_offset;
+	//output inst_field_t next_field_type;    
+    logic[22:0] instr_info=inst_info[instr];
+    logic[0:0] flag1; 
+    logic[0:0] flag2; 
+    logic[3:0] incr1; 
+    logic[3:0] incr2; 
+    logic[3:0] incr; 
+    logic[7:0] ibyte; 
+	logic[15:0] out;
+    logic[31:0] bo;
+    
+
+    begin        
+        $display("\n");
+        flag1=1'b0;
+        flag2=1'b0;
+        bo[31:0] = 32'b0;
+        bo[3:0] = inst_byte_offset[3:0];
+        $display("Instruction Info: %b %x",inst_info[instr],instr);   
+        
+        case(instr_info[22:21])
+            2'b00: $display("zero operands");
+            2'b01: $display("one operand");
+            2'b10: $display("two operand");
+            2'b11: $display("three operand");
+            default: $display("Error in operand recognition !!");
+        endcase
+
+         
+        case(instr_info[20:19])
+            2'b00: $display("Op1:register");
+            2'b01: $display("Op1:R/M");
+            2'b10: begin
+                        flag1=1'b1;
+                        $display("Op1:IMMEDIATE");
+                   end
+            2'b11: $display("Op1:fix operand");
+            default: $display("Op1:Error in numop recognition !!");
+        endcase
+        
+        case(instr_info[18:17])
+            2'b00: $display("Op2:register");
+            2'b01: $display("Op2:R/M");
+            2'b10: begin
+                        flag2=1'b1;
+                        $display("Op2:IMMEDIATE");
+                   end
+            2'b11: $display("Op2:fix operand");
+            default: $display("Op2:Error in op1 recognition !!");
+        endcase
+        
+        case(instr_info[16:15])
+            2'b00:  begin
+                        if(flag1==1'b1) begin
+                            incr1=4'd1;
+                            ibyte[7:0] = buffer[bo*8 +: 8];
+		                    toascii(out,ibyte[7:0]);
+		                    opcode_stream[191-optr*8 -: 16] = out;
+		                    optr = optr + 3;
+                            bo = bo + 1;
+                        end
+                        $display("Op1Size:8");
+                    end
+            2'b01: begin
+                        if(flag1==1'b1) begin
+                            incr1=4'd2;
+                            // 1
+                            ibyte[7:0] = buffer[bo*8 +: 8];
+		                    toascii(out,ibyte[7:0]);
+		                    opcode_stream[191-optr*8 -: 16] = out;
+		                    optr = optr + 3;
+                            bo = bo + 1;
+
+
+                            // 2
+                            ibyte[7:0] = buffer[bo*8 +: 8];
+		                    toascii(out,ibyte[7:0]);
+		                    opcode_stream[191-optr*8 -: 16] = out;
+		                    optr = optr + 3;
+                            bo = bo + 1;
+
+                        end
+                        $display("Op1Size:16");
+                    end
+            2'b10:  begin
+                        if(flag1==1'b1) begin
+                            incr1=4'd4;
+
+                            // 1
+                            ibyte[7:0] = buffer[bo*8 +: 8];
+		                    toascii(out,ibyte[7:0]);
+		                    opcode_stream[191-optr*8 -: 16] = out;
+		                    optr = optr + 3;
+                            bo = bo + 1;
+
+                            // 2
+                            ibyte[7:0] = buffer[bo*8 +: 8];
+		                    toascii(out,ibyte[7:0]);
+		                    opcode_stream[191-optr*8 -: 16] = out;
+		                    optr = optr + 3;
+                            bo = bo + 1;
+
+                            // 3
+                            ibyte[7:0] = buffer[bo*8 +: 8];
+		                    toascii(out,ibyte[7:0]);
+		                    opcode_stream[191-optr*8 -: 16] = out;
+		                    optr = optr + 3;
+                            bo = bo + 1;
+
+                            // 4
+                            ibyte[7:0] = buffer[bo*8 +: 8];
+		                    toascii(out,ibyte[7:0]);
+		                    opcode_stream[191-optr*8 -: 16] = out;
+		                    optr = optr + 3;
+                            bo = bo + 1;
+
+                        end
+                        $display("Op1Size:32");
+                    end
+            2'b11:  begin
+                        if(flag1==1'b1) begin
+                            incr1=4'd8;
+
+                            // 1
+                            ibyte[7:0] = buffer[bo*8 +: 8];
+		                    toascii(out,ibyte[7:0]);
+		                    opcode_stream[191-optr*8 -: 16] = out;
+		                    optr = optr + 3;
+                            bo = bo + 1;
+
+                            // 2
+                            ibyte[7:0] = buffer[bo*8 +: 8];
+		                    toascii(out,ibyte[7:0]);
+		                    opcode_stream[191-optr*8 -: 16] = out;
+		                    optr = optr + 3;
+                            bo = bo + 1;
+
+                            // 3
+                            ibyte[7:0] = buffer[bo*8 +: 8];
+		                    toascii(out,ibyte[7:0]);
+		                    opcode_stream[191-optr*8 -: 16] = out;
+		                    optr = optr + 3;
+                            bo = bo + 1;
+
+                            // 4
+                            ibyte[7:0] = buffer[bo*8 +: 8];
+		                    toascii(out,ibyte[7:0]);
+		                    opcode_stream[191-optr*8 -: 16] = out;
+		                    optr = optr + 3;
+                            bo = bo + 1;
+
+                            // 5
+                            ibyte[7:0] = buffer[bo*8 +: 8];
+		                    toascii(out,ibyte[7:0]);
+		                    opcode_stream[191-optr*8 -: 16] = out;
+		                    optr = optr + 3;
+                            bo = bo + 1;
+
+                            // 6
+                            ibyte[7:0] = buffer[bo*8 +: 8];
+		                    toascii(out,ibyte[7:0]);
+		                    opcode_stream[191-optr*8 -: 16] = out;
+		                    optr = optr + 3;
+                            bo = bo + 1;
+
+                            // 7
+                            ibyte[7:0] = buffer[bo*8 +: 8];
+		                    toascii(out,ibyte[7:0]);
+		                    opcode_stream[191-optr*8 -: 16] = out;
+		                    optr = optr + 3;
+                            bo = bo + 1;
+                            
+                            // 8
+                            ibyte[7:0] = buffer[bo*8 +: 8];
+		                    toascii(out,ibyte[7:0]);
+		                    opcode_stream[191-optr*8 -: 16] = out;
+		                    optr = optr + 3;
+                            bo = bo + 1;
+
+                        end
+                        $display("Op1size:64");
+                    end
+            default: $display("Op1size:Error in op1size recognition !!");
+        endcase
+        $display("Increment1 : %d", incr1);
+        
+        case(instr_info[14:13])
+            2'b00:  begin
+                        if(flag2==1'b1) begin 
+                            incr2=4'd1;
+                            ibyte[7:0] = buffer[bo*8 +: 8];
+		                    toascii(out,ibyte[7:0]);
+		                    opcode_stream[191-optr*8 -: 16] = out;
+		                    optr = optr + 3;
+                            bo = bo + 1;
+                        end
+                        $display("Op2Size:8");
+                    end
+            2'b01:  begin
+                        if(flag2==1'b1) begin 
+                            incr2=4'd2;
+
+                            // 1
+                            ibyte[7:0] = buffer[bo*8 +: 8];
+		                    toascii(out,ibyte[7:0]);
+		                    opcode_stream[191-optr*8 -: 16] = out;
+		                    optr = optr + 3;
+                            bo = bo + 1;
+
+                            // 2
+                            ibyte[7:0] = buffer[bo*8 +: 8];
+		                    toascii(out,ibyte[7:0]);
+		                    opcode_stream[191-optr*8 -: 16] = out;
+		                    optr = optr + 3;
+                            bo = bo + 1;
+                        end
+                        $display("Op2Size:16");
+                    end
+            2'b10:  begin
+                        if(flag2==1'b1) begin 
+                            incr2=4'd4;
+
+                            // 1
+                            ibyte[7:0] = buffer[bo*8 +: 8];
+		                    toascii(out,ibyte[7:0]);
+		                    opcode_stream[191-optr*8 -: 16] = out;
+		                    optr = optr + 3;
+                            bo = bo + 1;
+                            
+                            // 2
+                            ibyte[7:0] = buffer[bo*8 +: 8];
+		                    toascii(out,ibyte[7:0]);
+		                    opcode_stream[191-optr*8 -: 16] = out;
+		                    optr = optr + 3;
+                            bo = bo + 1;
+                            
+                            // 3
+                            ibyte[7:0] = buffer[bo*8 +: 8];
+		                    toascii(out,ibyte[7:0]);
+		                    opcode_stream[191-optr*8 -: 16] = out;
+		                    optr = optr + 3;
+                            bo = bo + 1;
+
+                            // 4
+                            ibyte[7:0] = buffer[bo*8 +: 8];
+		                    toascii(out,ibyte[7:0]);
+		                    opcode_stream[191-optr*8 -: 16] = out;
+		                    optr = optr + 3;
+                            bo = bo + 1;
+                        end
+                        $display("Op2Size:32");
+                    end
+            2'b11:  begin
+                        if(flag2==1'b1) begin 
+                            incr2=4'd8;
+
+                            // 1
+                            ibyte[7:0] = buffer[bo*8 +: 8];
+		                    toascii(out,ibyte[7:0]);
+		                    opcode_stream[191-optr*8 -: 16] = out;
+		                    optr = optr + 3;
+                            bo = bo + 1;
+
+                            // 2
+                            ibyte[7:0] = buffer[bo*8 +: 8];
+		                    toascii(out,ibyte[7:0]);
+		                    opcode_stream[191-optr*8 -: 16] = out;
+		                    optr = optr + 3;
+                            bo = bo + 1;
+
+                            // 3
+                            ibyte[7:0] = buffer[bo*8 +: 8];
+		                    toascii(out,ibyte[7:0]);
+		                    opcode_stream[191-optr*8 -: 16] = out;
+		                    optr = optr + 3;
+                            bo = bo + 1;
+                            
+                            // 4
+                            ibyte[7:0] = buffer[bo*8 +: 8];
+		                    toascii(out,ibyte[7:0]);
+		                    opcode_stream[191-optr*8 -: 16] = out;
+		                    optr = optr + 3;
+                            bo = bo + 1;
+                        
+                            // 5
+                            ibyte[7:0] = buffer[bo*8 +: 8];
+		                    toascii(out,ibyte[7:0]);
+		                    opcode_stream[191-optr*8 -: 16] = out;
+		                    optr = optr + 3;
+                            bo = bo + 1;
+
+                            // 6
+                            ibyte[7:0] = buffer[bo*8 +: 8];
+		                    toascii(out,ibyte[7:0]);
+		                    opcode_stream[191-optr*8 -: 16] = out;
+		                    optr = optr + 3;
+                            bo = bo + 1;
+
+                            // 7
+                            ibyte[7:0] = buffer[bo*8 +: 8];
+		                    toascii(out,ibyte[7:0]);
+		                    opcode_stream[191-optr*8 -: 16] = out;
+		                    optr = optr + 3;
+                            bo = bo + 1;
+
+                            // 8
+                            ibyte[7:0] = buffer[bo*8 +: 8];
+		                    toascii(out,ibyte[7:0]);
+		                    opcode_stream[191-optr*8 -: 16] = out;
+		                    optr = optr + 3;
+                            bo = bo + 1;
+                        end
+                        $display("Op2Size:64");
+                    end
+            default: $display("Op2Size:Error in op2size recognition !!");
+        endcase
+            $display("Increment2 : %d", incr2);
+
+        case(instr_info[12:9])
+            default:$display("Op1RegNo: %b", instr_info[12:9]);
+           // default: $display("Error in op1regno recognition !!");
+        endcase
+
+
+        case(instr_info[8:5])
+            default:$display("Op2RegNo: %b", instr_info[9:6]);
+           // default: $display("Error in op2regno recognition !!");
+        endcase
+
+
+        case(instr_info[4:0])
+            default:$display("Group Bytes: %b", instr_info[6:1]);
+           // default: $display("Error in groupno recognition !!");
+        endcase
+
+        incr=incr1+incr2;
+        next_byte_offset=inst_byte_offset+incr;
+        $display("Increment : %d", incr);
+    end
+endtask
+
+
+
+
 
 task check_legacy_prefix;
 	output logic[3:0] next_byte_offset;
@@ -86,7 +436,7 @@ task check_rex_prefix;
 		ibyte[7:0] = buffer[inst_byte_offset*8 +: 8];
 
 		if (ibyte[7:4] == 4'b0100) begin
-			$display("REX prefix");
+		//	$display("REX prefix");
 //			if (rex_bits[3] == 1'b1)
 //				$display("REX: 64 bit operand size");
 //			if (rex_bits[2] == 1'b1)
@@ -104,7 +454,7 @@ task check_rex_prefix;
 			optr = optr + 3;
 		end
 		else begin
-			$display("Not a REX prefix");
+//			$display("Not a REX prefix");
 			inc = 4'd0;
 			rex_bits[3:0] = 4'b0;
 		end
@@ -263,7 +613,7 @@ task check_modrm;
         reg1[2:0]=modrm[5:3];
         rm[2:0]=modrm[2:0];
 
-		get_reg();
+		//get_reg();
 
         if(mod[1:0]==2'b00) begin
             if(rm[2:0]==3'b110) begin
@@ -410,10 +760,12 @@ task decode;
 		end
 
 		offs5 = offs4;
-//		if ((next_fld_type & MOD_RM) == MOD_RM ) begin
-//			check_modrm(offs5,next_fld_type,offs4);
-//		end
+		if ((next_fld_type & MOD_RM) == MOD_RM ) begin
+		check_modrm(offs5,next_fld_type,offs4);
+		end
 		offs6 = offs5;
+
+        /* TODO: Handle SIB and DISPLACEMENT bytes  */
 
 //		if ((next_fld_type & SIB) == SIB ) begin
 //			check_sib(offs7,next_fld_type,offs6);
@@ -423,13 +775,14 @@ task decode;
 //		if ((next_fld_type & DISPLACEMENT) == DISPLACEMENT) begin
 //			check_disp(offs8,next_fld_type,offs7);
 //		end
-		offs8 = offs7;
-		
+	//	offs8 = offs7;
+
+		decode_instr(offs8,offs7);
+
         increment_by = offs8;
 		byte_incr = increment_by;
 	
 //		if (num_inst_bytes == 2'b01)
-//			decode_instr();
 //		else
 //			decode_instr2();
 

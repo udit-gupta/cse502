@@ -96,7 +96,7 @@ module Core (
 	mystring op2[0:255];
 	logic [255:0] ModRM;
 	logic [255:0] ModRM2;
-	logic[191:0] opcode_stream;
+	logic[359:0] opcode_stream;
 	logic[255:0] mnemonic_stream;
 	logic[22:0] inst_info[255];
 	logic[63:0] oper1;
@@ -152,7 +152,7 @@ module Core (
 			if (ModRM2[255:0] == 0);
 			if (inst_info[22:0] == 0);
 			if (mnemonic_stream[255:0] == 0);
-			if (opcode_stream[191:0] == 0);
+			if (opcode_stream[359:0] == 0);
 			if (alu_res[63:0] == 0);
 			if (src_vl == 0);
 			if (dest_vl == 0);
@@ -196,7 +196,7 @@ module Core (
 			oper1 <= 64'd12;
 			oper2 <= 64'd23;
 				
-			//$display("%x: %s %s", current_addr[63:0], opcode_stream[191:0],mnemonic_stream[255:0]); 
+			//$display("%x: %s %s", current_addr[63:0], opcode_stream[359:0],mnemonic_stream[255:0]); 
 			//$display("ALU Result: %b", alu_res);
 		end
 

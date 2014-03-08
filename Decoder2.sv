@@ -1,6 +1,6 @@
 module Decoder2(
 	output logic[3:0] byte_incr, 
-	output logic[191:0] opcode_stream,
+	output logic[359:0] opcode_stream,
     output logic[255:0] mnemonic_stream,
 	input logic[63:0] current_addr,
     input logic[0:15*8-1] buffer,
@@ -184,7 +184,7 @@ task decode_instr;
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								dest_val[63:0] = { 56'b0,  buffer[bo*8 +: 8]};
 								toascii(out,ibyte[7:0]);
-								opcode_stream[191-optr*8 -: 16] = out;
+								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
 							end
@@ -196,7 +196,7 @@ task decode_instr;
 								dest_val[63:0] = { 48'b0,  buffer[bo*8 +: 16]};
 								// 1
 								toascii(out,ibyte[7:0]);
-								opcode_stream[191-optr*8 -: 16] = out;
+								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
 
@@ -204,7 +204,7 @@ task decode_instr;
 								// 2
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
-								opcode_stream[191-optr*8 -: 16] = out;
+								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
 
@@ -219,28 +219,28 @@ task decode_instr;
 								// 1
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
-								opcode_stream[191-optr*8 -: 16] = out;
+								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
 
 								// 2
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
-								opcode_stream[191-optr*8 -: 16] = out;
+								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
 
 								// 3
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
-								opcode_stream[191-optr*8 -: 16] = out;
+								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
 
 								// 4
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
-								opcode_stream[191-optr*8 -: 16] = out;
+								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
 
@@ -255,56 +255,56 @@ task decode_instr;
 								// 1
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
-								opcode_stream[191-optr*8 -: 16] = out;
+								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
 
 								// 2
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
-								opcode_stream[191-optr*8 -: 16] = out;
+								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
 
 								// 3
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
-								opcode_stream[191-optr*8 -: 16] = out;
+								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
 
 								// 4
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
-								opcode_stream[191-optr*8 -: 16] = out;
+								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
 
 								// 5
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
-								opcode_stream[191-optr*8 -: 16] = out;
+								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
 
 								// 6
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
-								opcode_stream[191-optr*8 -: 16] = out;
+								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
 
 								// 7
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
-								opcode_stream[191-optr*8 -: 16] = out;
+								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
 								
 								// 8
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
-								opcode_stream[191-optr*8 -: 16] = out;
+								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
 
@@ -327,7 +327,7 @@ task decode_instr;
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								src_val[63:0] = { 56'b0,  buffer[bo*8 +: 8]};
 								toascii(out,ibyte[7:0]);
-								opcode_stream[191-optr*8 -: 16] = out;
+								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
 							end
@@ -341,14 +341,14 @@ task decode_instr;
 								// 1
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
-								opcode_stream[191-optr*8 -: 16] = out;
+								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
 
 								// 2
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
-								opcode_stream[191-optr*8 -: 16] = out;
+								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
 							end
@@ -362,28 +362,28 @@ task decode_instr;
 								// 1
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
-								opcode_stream[191-optr*8 -: 16] = out;
+								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
 								
 								// 2
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
-								opcode_stream[191-optr*8 -: 16] = out;
+								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
 								
 								// 3
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
-								opcode_stream[191-optr*8 -: 16] = out;
+								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
 
 								// 4
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
-								opcode_stream[191-optr*8 -: 16] = out;
+								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
 							end
@@ -397,56 +397,56 @@ task decode_instr;
 								// 1
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
-								opcode_stream[191-optr*8 -: 16] = out;
+								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
 
 								// 2
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
-								opcode_stream[191-optr*8 -: 16] = out;
+								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
 
 								// 3
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
-								opcode_stream[191-optr*8 -: 16] = out;
+								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
 								
 								// 4
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
-								opcode_stream[191-optr*8 -: 16] = out;
+								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
 							
 								// 5
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
-								opcode_stream[191-optr*8 -: 16] = out;
+								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
 
 								// 6
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
-								opcode_stream[191-optr*8 -: 16] = out;
+								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
 
 								// 7
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
-								opcode_stream[191-optr*8 -: 16] = out;
+								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
 
 								// 8
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
-								opcode_stream[191-optr*8 -: 16] = out;
+								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
 							end
@@ -538,7 +538,7 @@ task check_rex_prefix;
 				RM = 1'b1; 
 			inc = 4'd1;
 			toascii(out,ibyte[7:0]);
-			opcode_stream[191-optr*8 -: 16] = out;
+			opcode_stream[359-optr*8 -: 16] = out;
 			optr = optr + 3;
 		end
 		else begin
@@ -781,10 +781,10 @@ task check_opcode;
 			num_inst_bytes[1:0] = 2'b10;
 			instr[7:0] = buffer[inst_byte_offset*8 +: 8];
 			toascii(out1,8'h0f);
-			opcode_stream[191-optr*8 -: 16] = out1; 
+			opcode_stream[359-optr*8 -: 16] = out1; 
 			optr = optr + 3;
 			toascii(out2,buffer[inst_byte_offset*8 +: 8]);	
-			opcode_stream[191-optr*8 -: 16] = out2; 
+			opcode_stream[359-optr*8 -: 16] = out2; 
 			mnemonic_stream[255-mptr*8 -: 64] = op2[buffer[inst_byte_offset*8 +: 8]] ;
 			optr = optr + 3;
 			mptr = mptr + 8;
@@ -796,7 +796,7 @@ task check_opcode;
 			num_inst_bytes[1:0] = 2'b01;
 			instr[7:0] = buffer[inst_byte_offset*8 +: 8];
 			toascii(out1,buffer[inst_byte_offset*8 +: 8]);	
-			opcode_stream[191-optr*8 -: 16] = out1;
+			opcode_stream[359-optr*8 -: 16] = out1;
 
 			check_grp(grpflag,instr[7:0]);
 			if(grpflag==1'b0) begin
@@ -833,7 +833,7 @@ task check_modrm;
 		inc = 1;
 		modrm=buffer[inst_byte_offset*8 +: 8];
 		toascii(out1,modrm);	
-		opcode_stream[191-optr*8 -: 16] = out1;
+		opcode_stream[359-optr*8 -: 16] = out1;
 		optr = optr + 3;
 	/*	if(modrm[7:6] == 2'b11) begin
 		//	$display("Register Register Addressing (No Memory Operand); REX.X not used");
@@ -982,7 +982,7 @@ task decode;
 	begin
 //		$display("Start ............................................................................");
 		instr[7:0] = 0;
-		opcode_stream[191:0] = "                        ";
+		opcode_stream[359:0] = "                        ";
 		mnemonic_stream[255:0] = "                                ";
 		optr[7:0] = 8'b0;
 		mptr[7:0] = 8'b0;
@@ -1036,11 +1036,11 @@ task decode;
 		increment_by = offs8;
 		byte_incr = increment_by;
 		operation[7:0] = instr[7:0];
-		$display("%x: %s %s", current_addr[63:0], opcode_stream[191:0],mnemonic_stream[255:0]); 
+		$display("%x: %s %s", current_addr[63:0], opcode_stream[359:0],mnemonic_stream[255:0]); 
 //		$display("END ............................................................................");
 		// To suppress errors
 		if (mnemonic_stream == 0);
-		if (opcode_stream[191:0] == 0);
+		if (opcode_stream[359:0] == 0);
 		if (instr[7:0] == 0);
 		if (optr[7:0] == 0);
 		if (mptr[7:0] == 0);

@@ -31,12 +31,16 @@ logic [7:0] optr;
 logic [7:0] mptr;
 logic [1:0] num_inst_bytes;
 
+logic[63:0] grpop;
+logic[0:0] grpflag;
+
 typedef enum {
 	UNDEFINED=3'b000,
 	LEGACY_PREFIX=3'b001, REX_PREFIX=3'b010, OPCODE=3'b011, 
 	MOD_RM=3'b100, SIB=3'b101, DISPLACEMENT=3'b110, IMMEDIATE=3'b111
 } inst_field_t; 
 
+typedef logic[63:0] mystring;
 
 typedef enum {
 	REGISTER,
@@ -74,7 +78,7 @@ task decode_instr;
     
 
     begin        
-        $display("\n");
+      //  $display("\n");
 		incr1 = 4'b0; 
 		incr2 = 4'b0; 
         flag1=1'b0;
@@ -107,7 +111,7 @@ task decode_instr;
 					  dest_type = REGISTER;				
 					  dest_val[63:0] = { 60'b0,  rex_bits[2], rm[2:0] };
 	//				  $display("Op1:R/M: %x", dest_val[63:0]);
-					  reg_symbol(opstr[23:0],{rex_bits[2], rm[2:0]}, instr_info[16:15]);
+					  reg_symbol(opstr[23:0],{rex_bits[0], rm[2:0]}, instr_info[16:15]);
 					  mnemonic_stream[255-mptr*8 -: 24] = opstr[23:0];
 					  mptr = mptr + 4;
 				  end
@@ -142,7 +146,7 @@ task decode_instr;
 					src_type = REGISTER;
 					src_val[63:0] = { 60'b0, rex_bits[2], rm[2:0] };
 		//			$display("Op2:R/M: %x", src_val[63:0]);
-					reg_symbol(opstr[23:0] ,{rex_bits[2],rm[2:0]}, instr_info[14:13]);
+					reg_symbol(opstr[23:0] ,{rex_bits[0],rm[2:0]}, instr_info[14:13]);
 					mnemonic_stream[255-mptr*8 -: 24] = opstr[23:0];
 					mptr = mptr + 4;
 				end
@@ -665,6 +669,80 @@ begin
 end
 endtask
 
+task check_grp;
+	output logic[0:0] grp1flag;
+	input logic[7:0]  instruction;
+
+	if(instruction[7:0]>=8'd128 && instruction[7:0]<=8'd131) begin
+		grp1flag=1'b1; 
+	end
+	else if(instruction[7:0]==8'hf6 || instruction[7:0]==8'hf7) begin
+		grp1flag=1'b1; 
+	end
+	else begin
+		grp1flag=1'b0; 
+	end
+endtask
+
+task update_opgrp; 
+	output mystring grp1op;
+	input logic[7:0]  instruction;
+
+	if(instruction[7:0]>=8'd128 && instruction[7:0]<=8'd131) begin
+		if(reg1[2:0]==3'b000) begin
+			grp1op="ADD   ";
+		end
+		else if(reg1[2:0]==3'b001) begin
+			grp1op="OR    ";
+		end
+		else if(reg1[2:0]==3'b010) begin
+			grp1op="ADC   ";
+		end
+		else if(reg1[2:0]==3'b011) begin
+			grp1op="SBB   ";
+		end
+		else if(reg1[2:0]==3'b100) begin
+			grp1op="AND   ";
+		end
+		else if(reg1[2:0]==3'b101) begin
+			grp1op="SUB   ";
+		end
+		else if(reg1[2:0]==3'b110) begin
+			grp1op="XOR   ";
+		end
+		else if(reg1[2:0]==3'b111) begin
+			grp1op="CMP   ";
+		end
+	end
+	else if(instruction[7:0]==8'hf6 || instruction[7:0]==8'hf7) begin
+		if(reg1[2:0]==3'b000) begin
+			grp1op="TEST   ";
+		end
+		else if(reg1[2:0]==3'b001) begin
+			grp1op="       ";
+		end
+		else if(reg1[2:0]==3'b010) begin
+			grp1op="NOT   ";
+		end
+		else if(reg1[2:0]==3'b011) begin
+			grp1op="NEG   ";
+		end
+		else if(reg1[2:0]==3'b100) begin
+			grp1op="MUL   ";
+		end
+		else if(reg1[2:0]==3'b101) begin
+			grp1op="IMUL   ";
+		end
+		else if(reg1[2:0]==3'b110) begin
+			grp1op="DIV   ";
+		end
+		else if(reg1[2:0]==3'b111) begin
+			grp1op="IDIV   ";
+		end
+	end
+endtask
+
+
 task check_opcode;
 	output logic[3:0] next_byte_offset;
 	output inst_field_t next_field_type;
@@ -675,12 +753,14 @@ task check_opcode;
 
 	begin
 		inc = 1;
+		grpflag = 1'b0;
+		RM = 1'b0;
 
 		if (buffer[inst_byte_offset*8 +: 8]==8'h0f) begin
-            inst_byte_offset=inst_byte_offset+1;
-			inc = inc + 1;
-		    //$display("Opcode 2: 0x%x", buffer[inst_byte_offset*8 +: 8]);	
-		    //$display("Opcode 2: %s", op2[buffer[inst_byte_offset*8 +: 8]]);	
+			inst_byte_offset=inst_byte_offset+1;
+		//	inc = inc + 1;
+			//$display("Opcode 2: 0x%x", buffer[inst_byte_offset*8 +: 8]);	
+			//$display("Opcode 2: %s", op2[buffer[inst_byte_offset*8 +: 8]]);	
 			num_inst_bytes[1:0] = 2'b10;
 			instr[7:0] = buffer[inst_byte_offset*8 +: 8];
 			toascii(out1,8'h0f);
@@ -692,25 +772,27 @@ task check_opcode;
 			optr = optr + 3;
 			mptr = mptr + 8;
 			RM = ModRM2[255-buffer[inst_byte_offset*8 +: 8]];
-        end
-        else begin 
-		    //$display("Opcode 1: 0x%x", buffer[inst_byte_offset*8 +: 8]);	
-		    //$display("Opcode 1: %s", op[buffer[inst_byte_offset*8 +: 8]]);	
+		end
+		else begin 
+			//$display("Opcode 1: 0x%x", buffer[inst_byte_offset*8 +: 8]);	
+			//$display("Opcode 1: %s", op[buffer[inst_byte_offset*8 +: 8]]);	
 			num_inst_bytes[1:0] = 2'b01;
 			instr[7:0] = buffer[inst_byte_offset*8 +: 8];
 			toascii(out1,buffer[inst_byte_offset*8 +: 8]);	
 			opcode_stream[191-optr*8 -: 16] = out1;
-			mnemonic_stream[255-mptr*8 -: 64] = op[buffer[inst_byte_offset*8 +: 8]] ;
-			optr = optr + 3;
-			mptr = mptr + 8;
-			RM = ModRM[255-buffer[inst_byte_offset*8 +: 8]];
-	    end
 
-		if (instr[7:0] == 8'hFF) begin
-			RM = 1'b1;
+			check_grp(grpflag,instr[7:0]);
+			if(grpflag==1'b0) begin
+				mnemonic_stream[255-mptr*8 -: 64] = op[buffer[inst_byte_offset*8 +: 8]];
+				mptr = mptr + 8;
+			end
+
+			optr = optr + 3;
+			RM = ModRM[255-buffer[inst_byte_offset*8 +: 8]];
 		end
 
-		if (RM) begin
+
+		if (RM == 1) begin
 			//$display("ModRM present");
 			next_field_type = MOD_RM;
 		end
@@ -718,8 +800,8 @@ task check_opcode;
 			//$display("ModRM absent");
 			next_field_type = LEGACY_PREFIX;
 		end
-        next_byte_offset = inst_byte_offset + inc;
-    end
+		next_byte_offset = inst_byte_offset + inc;
+	end
 endtask 
 
 
@@ -745,43 +827,50 @@ task check_modrm;
 			//RR_addr[0] = 1'b0;
 		end
 	*/	//$display("Register Name : %x",{rex_bits[2],modrm[5:3]});
-	
-        mod[1:0]=modrm[7:6];
-        reg1[2:0]=modrm[5:3];
-        rm[2:0]=modrm[2:0];
 
+		mod[1:0]=modrm[7:6];
+		reg1[2:0]=modrm[5:3];
+		rm[2:0]=modrm[2:0];
+
+
+		check_grp(grpflag,instr[7:0]);
+		if(grpflag!=1'b0) begin
+				update_opgrp(grpop,instr[7:0]);
+				mnemonic_stream[255-mptr*8 -: 64] = grpop;
+				mptr = mptr + 8;
+		end
 		//get_reg();
 
-        if(mod[1:0]==2'b00) begin
-            if(rm[2:0]==3'b110) begin
-                dispsize[4:0]=5'd16;
-            end
-            else begin
-                dispsize[4:0]=5'd16;
-            end
-        end
-        else if(mod[1:0]==2'b01) begin
-            dispsize[4:0]=5'd8;
-        end
-        else if(mod[1:0]==2'b10) begin
-            dispsize[4:0]=5'd16;
-        end
-        else begin
-            dispsize[4:0]=5'd0;
-        end
+		if(mod[1:0]==2'b00) begin
+			if(rm[2:0]==3'b110) begin
+				dispsize[4:0]=5'd16;
+			end
+			else begin
+				dispsize[4:0]=5'd16;
+			end
+		end
+		else if(mod[1:0]==2'b01) begin
+			dispsize[4:0]=5'd8;
+		end
+		else if(mod[1:0]==2'b10) begin
+			dispsize[4:0]=5'd16;
+		end
+		else begin
+			dispsize[4:0]=5'd0;
+		end
 
 		if(reg1[2:0]==3'b000);   // 
 		if(rex_bits[2:0]==3'b000);   // 
-        
-        
-        next_field_type=LEGACY_PREFIX;
+
+
+		next_field_type=LEGACY_PREFIX;
 		if(mod[1:0]!=2'b11 && modrm[2:0] == 3'b100) begin
-				next_field_type = next_field_type | SIB;
+			next_field_type = next_field_type | SIB;
 		end
-    /*    if(dispsize[4:0]!=5'd0) begin
+	/*    if(dispsize[4:0]!=5'd0) begin
 				$display("bye");
 				next_field_type = next_field_type | DISPLACEMENT;
-        end 
+		end 
 	*/	
 		next_byte_offset = inst_byte_offset + inc;
 
@@ -895,15 +984,17 @@ task decode;
 		offs4 = offs3;
 		if ((next_fld_type & OPCODE) == OPCODE ) begin
 			check_opcode(offs4,next_fld_type,offs3);
+			//$display("increment by op: %d",offs4);
 		end
 
 		offs5 = offs4;
 		if ((next_fld_type & MOD_RM) == MOD_RM ) begin
-		check_modrm(offs5,next_fld_type,offs4);
+			check_modrm(offs5,next_fld_type,offs4);
+		//	$display("increment by modrm: %d",offs5);
 		end
 		offs6 = offs5;
 
-        /* TODO: Handle SIB and DISPLACEMENT bytes  */
+		/* TODO: Handle SIB and DISPLACEMENT bytes  */
 
 //		if ((next_fld_type & SIB) == SIB ) begin
 //			check_sib(offs7,next_fld_type,offs6);
@@ -917,13 +1008,15 @@ task decode;
 		offs8 = offs7;
 
 
-		if (num_inst_bytes == 2'b01)
+		if (num_inst_bytes == 2'b01) begin
+//			$display("One byte instr");
 			decode_instr(offs8, num_op, src_type, dest_type, src_val, dest_val, src_size, dest_size, offs7);
+		end
 //		else
 //			decode_instr2(offs8,offs7);
 		// TODO: handle two byte opcodes
 
-        increment_by = offs8;
+		increment_by = offs8;
 		byte_incr = increment_by;
 		operation[7:0] = instr[7:0];
 		$display("%x: %s %s", current_addr[63:0], opcode_stream[191:0],mnemonic_stream[255:0]); 

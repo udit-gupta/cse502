@@ -4,8 +4,7 @@ output mystring op2[0:255];
 output logic[255:0] ModRM2 = 256'b0;
 
 initial begin
-
-	//opcode mnemonics;
+//opcode mnemonics;
 
 op2[0] ="Grp6";
 op2[1] ="Grp7";

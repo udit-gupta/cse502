@@ -44,15 +44,21 @@ typedef enum {
 	IMM
 } operand_t;
 
+
+typedef enum { RAX, RCX, RDX, RBX, RSP, RBP, RSI, RDI, R8, R9, R10, R11, R12, R13, R14, R15 } regname;
+
 // TODO: Legacy prefix : no actions defined: low prioirity 
 
 
 task decode_instr;
 	output logic[3:0] next_byte_offset;
+	output logic[1:0] num_op;
 	output operand_t src_type;
 	output operand_t dest_type;
 	output logic[63:0] src_val;
 	output logic[63:0] dest_val;
+	output logic[1:0] src_size;
+	output logic[1:0] dest_size;
 	input logic[3:0]  inst_byte_offset;
 	//output inst_field_t next_field_type;    
     logic[22:0] instr_info=inst_info[instr];
@@ -64,6 +70,7 @@ task decode_instr;
     logic[7:0] ibyte; 
 	logic[15:0] out;
     logic[31:0] bo;
+	logic[23:0] opstr;
     
 
     begin        
@@ -74,59 +81,89 @@ task decode_instr;
         flag2=1'b0;
         bo[31:0] = 32'b0;
         bo[3:0] = inst_byte_offset[3:0];
-        $display("Instruction Info: %b %x",inst_info[instr],instr);   
+      //  $display("Instruction Info: %b %x",inst_info[instr],instr);   
         
-        case(instr_info[22:21])
-            2'b00: $display("zero operands");
-            2'b01: $display("one operand");
-            2'b10: $display("two operand");
-            2'b11: $display("three operand");
-            default: $display("Error in operand recognition !!");
-        endcase
+//        case(instr_info[22:21])
+//            2'b00: $display("zero operands");
+//            2'b01: $display("one operand");
+//            2'b10: $display("two operand");
+//            2'b11: $display("three operand");
+//            default: $display("Error in operand recognition !!");
+//        endcase
 
+		num_op[1:0] = instr_info[22:21];
+	//	$display("Number of operands %d", num_op[1:0]);
          
         case(instr_info[20:19])
 			2'b00: begin 
-						$display("Op1:register");
 						dest_type = REGISTER;
+						dest_val[63:0] = { 60'b0, rex_bits[2], reg1[2:0] };
+	//					$display("Op1:register: %x", dest_val[63:0]);
+						reg_symbol(opstr[23:0], {rex_bits[2],reg1[2:0]}, instr_info[16:15]);
+						mnemonic_stream[255-mptr*8 -: 24] = opstr[23:0];
+						mptr = mptr + 4;
 				  end
 		   2'b01: begin
-					  $display("Op1:R/M");
 					  dest_type = REGISTER;				
+					  dest_val[63:0] = { 60'b0,  rex_bits[2], rm[2:0] };
+	//				  $display("Op1:R/M: %x", dest_val[63:0]);
+					  reg_symbol(opstr[23:0],{rex_bits[2], rm[2:0]}, instr_info[16:15]);
+					  mnemonic_stream[255-mptr*8 -: 24] = opstr[23:0];
+					  mptr = mptr + 4;
 				  end
             2'b10: begin
                         flag1=1'b1;
-                        $display("Op1:IMMEDIATE");
+      //                  $display("Op1:IMMEDIATE");
 						dest_type = IMM;
                    end
 		    2'b11: begin 
-				      $display("Op1:fix operand");
 					  dest_type = REGISTER;
+					  //$display("Op1RegNo: %b", instr_info[12:9]);
+					  dest_val[63:0] = { 60'b0  , instr_info[12:9]};
+		//		      $display("Op1:fixed operand %x", dest_val[63:0]);
+					  reg_symbol( opstr[23:0], {rex_bits[2],instr_info[12:10]}, instr_info[16:15]);
+					  mnemonic_stream[255-mptr*8 -: 24] = opstr[23:0];
+					  mptr = mptr + 4;
 				 end
             default: $display("Op1:Error in numop recognition !!");
         endcase
         
+			
         case(instr_info[18:17])
 			2'b00: begin
-					$display("Op2:register");
 					src_type = REGISTER;
+					src_val[63:0] = { 60'b0, rex_bits[2], reg1[2:0] };
+		//			$display("Op2:register: %x", src_val[63:0]);
+					reg_symbol(opstr[23:0], {rex_bits[2],reg1[2:0]}, instr_info[14:13]);
+					mnemonic_stream[255-mptr*8 -: 24] = opstr[23:0];
+					mptr = mptr + 4;
 				end
 			2'b01: begin
-					$display("Op2:R/M");
 					src_type = REGISTER;
+					src_val[63:0] = { 60'b0, rex_bits[2], rm[2:0] };
+		//			$display("Op2:R/M: %x", src_val[63:0]);
+					reg_symbol(opstr[23:0] ,{rex_bits[2],rm[2:0]}, instr_info[14:13]);
+					mnemonic_stream[255-mptr*8 -: 24] = opstr[23:0];
+					mptr = mptr + 4;
 				end
             2'b10: begin
-                        flag2=1'b1;
-                        $display("Op2:IMM");
-					 src_type = IMMEDIATE;
-                   end
+				flag2=1'b1;
+				src_type = IMMEDIATE;
+		//		$display("Op2:IMM");
+			end
 		   2'b11: begin
-				$display("Op2:fix operand");
 				src_type = REGISTER;
+				// $display("Op2RegNo: %b", instr_info[12:9]);
+				src_val[63:0] = { 60'b0, instr_info[8:5]};
+		//		$display("Op2:fix operand %x", src_val[63:0]);
+				reg_symbol(opstr[23:0],{rex_bits[2],instr_info[8:6]} ,instr_info[16:15]);
+				mnemonic_stream[255-mptr*8 -: 24] = opstr[23:0];
+				mptr = mptr + 4;
 			end
             default: $display("Op2:Error in op1 recognition !!");
         endcase
         
+		dest_size[1:0] = instr_info[16:15];
         case(instr_info[16:15])
             2'b00:  begin
                         if(flag1==1'b1) begin
@@ -138,7 +175,7 @@ task decode_instr;
 		                    optr = optr + 3;
                             bo = bo + 1;
                         end
-                        $display("Op1Size:8");
+          //              $display("Op1Size:8");
                     end
             2'b01: begin
                         if(flag1==1'b1) begin
@@ -159,7 +196,7 @@ task decode_instr;
                             bo = bo + 1;
 
                         end
-                        $display("Op1Size:16");
+            //            $display("Op1Size:16");
                     end
             2'b10:  begin
                         if(flag1==1'b1) begin
@@ -195,7 +232,7 @@ task decode_instr;
                             bo = bo + 1;
 
                         end
-                        $display("Op1Size:32");
+              //          $display("Op1Size:32");
                     end
             2'b11:  begin
                         if(flag1==1'b1) begin
@@ -259,12 +296,13 @@ task decode_instr;
                             bo = bo + 1;
 
                         end
-                        $display("Op1size:64");
+                //        $display("Op1size:64");
                     end
             default: $display("Op1size:Error in op1size recognition !!");
         endcase
-        $display("Increment1 : %d", incr1);
+      //  $display("Increment1 : %d", incr1);
         
+		src_size[1:0] = instr_info[14:13];
         case(instr_info[14:13])
             2'b00:  begin
                         if(flag2==1'b1) begin 
@@ -276,7 +314,7 @@ task decode_instr;
 		                    optr = optr + 3;
                             bo = bo + 1;
                         end
-                        $display("Op2Size:8");
+        //                $display("Op2Size:8");
                     end
             2'b01:  begin
                         if(flag2==1'b1) begin 
@@ -297,7 +335,7 @@ task decode_instr;
 		                    optr = optr + 3;
                             bo = bo + 1;
                         end
-                        $display("Op2Size:16");
+          //              $display("Op2Size:16");
                     end
             2'b10:  begin
                         if(flag2==1'b1) begin 
@@ -332,7 +370,7 @@ task decode_instr;
 		                    optr = optr + 3;
                             bo = bo + 1;
                         end
-                        $display("Op2Size:32");
+            //            $display("Op2Size:32");
                     end
             2'b11:  begin
                         if(flag2==1'b1) begin 
@@ -395,43 +433,22 @@ task decode_instr;
 		                    optr = optr + 3;
                             bo = bo + 1;
                         end
-                        $display("Op2Size:64");
+              //          $display("Op2Size:64");
                     end
             default: $display("Op2Size:Error in op2size recognition !!");
         endcase
-            $display("Increment2 : %d", incr2);
+          //  $display("Increment2 : %d", incr2);
 
-//        case(instr_info[12:9])
-//            default:$display("Op1RegNo: %b", instr_info[12:9]);
-//           // default: $display("Error in op1regno recognition !!");
-//        endcase
-//
-//
-//        case(instr_info[8:5])
-//            default:$display("Op2RegNo: %b", instr_info[9:6]);
-//           // default: $display("Error in op2regno recognition !!");
-//        endcase
-//
 
-		 if (dest_type == REGISTER ) begin
-            $display("Op1RegNo: %b", instr_info[12:9]);
-			dest_val[63:0] = { 60'b0  , instr_info[12:9]};
-			
-		 end
-
-		 if (src_type == REGISTER ) begin
-           $display("Error in op2regno recognition !!");
-			src_val[63:0] = { 60'b0  , instr_info[8:5]};
-		 end
-
-        case(instr_info[4:0])
-            default:$display("Group Bytes: %b", instr_info[6:1]);
+     //   case(instr_info[4:0])
+       //     default:$display("Group Bytes: %b", instr_info[6:1]);
            // default: $display("Error in groupno recognition !!");
-        endcase
+     //   endcase
 
+     	if(instr_info[4:0]==5'b0);
         incr=incr1+incr2;
         next_byte_offset=inst_byte_offset+incr;
-        $display("Increment : %d", incr);
+       // $display("Increment : %d", incr);
     end
 endtask
 
@@ -535,8 +552,8 @@ begin
 		4'b0101: ereg[31:0]="%rbp";
 		4'b0110: ereg[31:0]="%rsi";
 		4'b0111: ereg[31:0]="%rdi";
-		4'b1000: ereg[31:0]="%r8";
-		4'b1001: ereg[31:0]="%r9";
+		4'b1000: ereg[31:0]="%r8 ";
+		4'b1001: ereg[31:0]="%r9 ";
 		4'b1010: ereg[31:0]="%r10";
 		4'b1011: ereg[31:0]="%r11";
 		4'b1100: ereg[31:0]="%r12";
@@ -555,8 +572,8 @@ begin
 		4'b0101: greg[31:0]="%rbp";
 		4'b0110: greg[31:0]="%rsi";
 		4'b0111: greg[31:0]="%rdi";
-		4'b1000: greg[31:0]="%r8";
-		4'b1001: greg[31:0]="%r9";
+		4'b1000: greg[31:0]="%r8 ";
+		4'b1001: greg[31:0]="%r9 ";
 		4'b1010: greg[31:0]="%r10";
 		4'b1011: greg[31:0]="%r11";
 		4'b1100: greg[31:0]="%r12";
@@ -570,6 +587,83 @@ end
 endtask
 
 
+task reg_symbol;
+	output logic[23:0] gpr;
+	input logic[3:0] rnum;
+	input logic[1:0] sz;
+
+begin
+	if (sz[1:0] == 2'b11)
+	begin
+		case(rnum[3:0]) 
+			4'b0000: gpr[23:0] = "rax";
+			4'b0001: gpr[23:0] = "rcx";
+			4'b0010: gpr[23:0] = "rdx";
+			4'b0011: gpr[23:0] = "rbx";
+			4'b0100: gpr[23:0] = "rsp";
+			4'b0101: gpr[23:0] = "rbp";
+			4'b0110: gpr[23:0] = "rsi";
+			4'b0111: gpr[23:0] = "rdi";
+			4'b1000: gpr[23:0] = "r8 ";
+			4'b1001: gpr[23:0] = "r9 ";
+			4'b1010: gpr[23:0] = "r10";
+			4'b1011: gpr[23:0] = "r11";
+			4'b1100: gpr[23:0] = "r12";
+			4'b1101: gpr[23:0] = "r13";
+			4'b1110: gpr[23:0] = "r14";
+			4'b1111: gpr[23:0] = "r15";
+			default:;
+		endcase
+	end
+
+	else if (sz[1:0] == 2'b10)
+	begin
+		case(rnum[3:0]) 
+			4'b0000: gpr[23:0] = "eax";
+			4'b0001: gpr[23:0] = "ecx";
+			4'b0010: gpr[23:0] = "edx";
+			4'b0011: gpr[23:0] = "ebx";
+			4'b0100: gpr[23:0] = "esp";
+			4'b0101: gpr[23:0] = "ebp";
+			4'b0110: gpr[23:0] = "esi";
+			4'b0111: gpr[23:0] = "edi";
+			default: ;
+		endcase
+	end
+
+
+	else if (sz[1:0] == 2'b01)
+	begin
+		case(rnum[3:0]) 
+			4'b0000: gpr[23:0] = "ax";
+			4'b0001: gpr[23:0] = "cx";
+			4'b0010: gpr[23:0] = "dx";
+			4'b0011: gpr[23:0] = "bx";
+			4'b0100: gpr[23:0] = "sp";
+			4'b0101: gpr[23:0] = "bp";
+			4'b0110: gpr[23:0] = "si";
+			4'b0111: gpr[23:0] = "di";
+			default: ;
+		endcase
+	end
+
+	else if (sz[1:0] == 2'b00)
+	begin
+		case(rnum[3:0]) 
+			4'b0000: gpr[23:0] = "al";
+			4'b0001: gpr[23:0] = "cl";
+			4'b0010: gpr[23:0] = "dl";
+			4'b0011: gpr[23:0] = "bl";
+			4'b0100: gpr[23:0] = "sp";
+			4'b0101: gpr[23:0] = "bp";
+			4'b0110: gpr[23:0] = "si";
+			4'b0111: gpr[23:0] = "di";
+			default: ;
+		endcase
+	end
+
+end
+endtask
 
 task check_opcode;
 	output logic[3:0] next_byte_offset;
@@ -581,15 +675,7 @@ task check_opcode;
 
 	begin
 		inc = 1;
-      /*  if (buffer[inst_byte_offset*8 +: 8]==8'h00) begin
-				
-        	if (buffer[inst_byte_offset*8 +: 24]==24'h00) begin
-				opcode_stream[191-optr*8 -: 64] = "00 00 00"; 
-				optr = optr + 8;	
-				next_field_type = LEGACY_PREFIX;
-			end
-		end
-        else */
+
 		if (buffer[inst_byte_offset*8 +: 8]==8'h0f) begin
             inst_byte_offset=inst_byte_offset+1;
 			inc = inc + 1;
@@ -708,16 +794,6 @@ task check_modrm;
 endtask
 
 
-//task check_modrm;
-//	output logic[3:0] next_byte_offset;
-//	output inst_field_t next_field_type;
-//	input logic[3:0] inst_byte_offset;
-////	logic[3:0] inc;
-////	logic[15:0] out1;
-//
-//endtask
-
-
 
 task toascii;
 	output logic[15:0] O;
@@ -777,10 +853,16 @@ endtask
 
 task decode;
 	output logic[3:0] increment_by;
+	output logic[7:0] operation; 
+	output logic[1:0] num_op;
 	output operand_t src_type;
 	output operand_t dest_type;
 	output logic[63:0] src_val;
 	output logic[63:0] dest_val;
+	output logic[1:0] src_size;
+	output logic[1:0] dest_size;
+
+
 	logic[3:0] offs;
 	logic[3:0] offs2;
 	logic[3:0] offs3;
@@ -792,6 +874,7 @@ task decode;
 	inst_field_t next_fld_type;
 
 	begin
+//		$display("Start ............................................................................");
 		instr[7:0] = 0;
 		opcode_stream[191:0] = "                        ";
 		mnemonic_stream[255:0] = "                                ";
@@ -835,14 +918,16 @@ task decode;
 
 
 		if (num_inst_bytes == 2'b01)
-			decode_instr(offs8,src_type, dest_type, src_val, dest_val, offs7);
+			decode_instr(offs8, num_op, src_type, dest_type, src_val, dest_val, src_size, dest_size, offs7);
 //		else
 //			decode_instr2(offs8,offs7);
 		// TODO: handle two byte opcodes
 
         increment_by = offs8;
 		byte_incr = increment_by;
-
+		operation[7:0] = instr[7:0];
+		$display("%x: %s %s", current_addr[63:0], opcode_stream[191:0],mnemonic_stream[255:0]); 
+//		$display("END ............................................................................");
 		// To suppress errors
 		if (mnemonic_stream == 0);
 		if (opcode_stream[191:0] == 0);

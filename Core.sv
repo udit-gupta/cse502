@@ -105,6 +105,11 @@ module Core (
 	logic[63:0] alu_res;
 	logic[63:0] src_vl;
 	logic[63:0] dest_vl;
+	logic[1:0] src_sz;
+	logic[1:0] dest_sz;
+	logic[7:0] opern;
+	logic[1:0] numop;
+
 	typedef enum {
 		REGISTER,
 		MEOMORY,
@@ -138,7 +143,7 @@ module Core (
 			end
 			else begin 
 
-			D.decode(bytes_decoded_this_cycle,src_ty,dest_ty,src_vl,dest_vl);
+			D.decode(bytes_decoded_this_cycle,opern,numop,src_ty,dest_ty,src_vl,dest_vl,src_sz,dest_sz);
 	//		$display("bytes_decoded_this_cycle : %d", bytes_decoded_this_cycle); 
 	//		$display("bytes_decoded_this_cycle : %d", bytes_decoded_this_cycle); 
 		
@@ -153,10 +158,14 @@ module Core (
 			if (dest_vl == 0);
 			if (src_ty == 0);
 			if (dest_ty == 0);
+			if (src_sz == 0);
+			if (dest_sz == 0);
+			if (opern == 0);
+			if (numop == 0);
 
 			// cse502 : following is an example of how to finish the simulation
-			$display("decode_bytes: %x", decode_bytes);
-			$display("fetch_state: %x", fetch_idle);
+	//		$display("decode_bytes: %x", decode_bytes);
+	//		$display("fetch_state: %x", fetch_idle);
 			//if (decode_bytes == 0 && fetch_state == fetch_idle) $finish;
 			//if (decode_bytes[0:119] == 120'b0 || fetch_state == fetch_idle) $finish;
 			//if (decode_bytes[0:119] == 120'b0 ) $finish;

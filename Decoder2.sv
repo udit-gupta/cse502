@@ -33,6 +33,8 @@ logic [1:0] num_inst_bytes;
 
 logic[63:0] grpop;
 logic[0:0] grpflag;
+//logic[63:0] t1 = 64'hAABBCCDD11223344;
+//logic[63:0] t2 = 64'b0;
 
 typedef enum {
 	UNDEFINED=3'b000,
@@ -94,6 +96,10 @@ task decode_instr;
 //            2'b11: $display("three operand");
 //            default: $display("Error in operand recognition !!");
 //        endcase
+
+		// endianswap(t2[63:0],t1[63:0]);
+		// $display("t1: %x", t1[63:0]);
+		// $display("t2: %x", t2[63:0]);
 
 		num_op[1:0] = instr_info[22:21];
 //		$display("Number of operands %d", num_op[1:0]);
@@ -187,8 +193,11 @@ task decode_instr;
 								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
+
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
 							end
-			  //              $display("Op1Size:8");
+			                // $display("Op1Size:8");
 						end
 				2'b01: begin
 							if(flag1==1'b1) begin
@@ -200,6 +209,7 @@ task decode_instr;
 								optr = optr + 3;
 								bo = bo + 1;
 
+								mnemonic_stream[255-mptr*8-16 -: 16] = out;
 
 								// 2
 								ibyte[7:0] = buffer[bo*8 +: 8];
@@ -208,6 +218,9 @@ task decode_instr;
 								optr = optr + 3;
 								bo = bo + 1;
 
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+
+								mptr = mptr + 4;
 							end
 				//            $display("Op1Size:16");
 						end
@@ -223,12 +236,17 @@ task decode_instr;
 								optr = optr + 3;
 								bo = bo + 1;
 
+								mnemonic_stream[255-mptr*8-48 -: 16] = out;
+
 								// 2
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
 								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
+
+
+								mnemonic_stream[255-mptr*8-32 -: 16] = out;
 
 								// 3
 								ibyte[7:0] = buffer[bo*8 +: 8];
@@ -237,12 +255,18 @@ task decode_instr;
 								optr = optr + 3;
 								bo = bo + 1;
 
+								mnemonic_stream[255-mptr*8-16 -: 16] = out;
+
 								// 4
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
 								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
+
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+
+								mptr = mptr + 8;
 
 							end
 				  //          $display("Op1Size:32");
@@ -259,12 +283,16 @@ task decode_instr;
 								optr = optr + 3;
 								bo = bo + 1;
 
+								mnemonic_stream[255-mptr*8-112 -: 16] = out;
+
 								// 2
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
 								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
+
+								mnemonic_stream[255-mptr*8-96 -: 16] = out;
 
 								// 3
 								ibyte[7:0] = buffer[bo*8 +: 8];
@@ -273,12 +301,16 @@ task decode_instr;
 								optr = optr + 3;
 								bo = bo + 1;
 
+								mnemonic_stream[255-mptr*8-80 -: 16] = out;
+
 								// 4
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
 								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
+
+								mnemonic_stream[255-mptr*8-64 -: 16] = out;
 
 								// 5
 								ibyte[7:0] = buffer[bo*8 +: 8];
@@ -287,6 +319,8 @@ task decode_instr;
 								optr = optr + 3;
 								bo = bo + 1;
 
+								mnemonic_stream[255-mptr*8-48 -: 16] = out;
+
 								// 6
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
@@ -294,12 +328,16 @@ task decode_instr;
 								optr = optr + 3;
 								bo = bo + 1;
 
+								mnemonic_stream[255-mptr*8-32 -: 16] = out;
+
 								// 7
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
 								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
+
+								mnemonic_stream[255-mptr*8-16 -: 16] = out;
 								
 								// 8
 								ibyte[7:0] = buffer[bo*8 +: 8];
@@ -307,6 +345,10 @@ task decode_instr;
 								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
+
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+
+								mptr = mptr + 16;
 
 							end
 					//        $display("Op1size:64");
@@ -319,6 +361,9 @@ task decode_instr;
 
 		if (num_op[1:0] > 2'd1) begin 
         
+			mptr =  mptr - 1;
+			mnemonic_stream[255-mptr*8 -: 8] = 8'h2C;  // comma
+			mptr = mptr + 1;
 			src_size[1:0] = instr_info[14:13];
 			case(instr_info[14:13])
 				2'b00:  begin
@@ -330,8 +375,11 @@ task decode_instr;
 								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
+
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
 							end
-			//                $display("Op2Size:8");
+			                //$display("Op2Size:8");
 						end
 				2'b01:  begin
 							if(flag2==1'b1) begin 
@@ -345,14 +393,23 @@ task decode_instr;
 								optr = optr + 3;
 								bo = bo + 1;
 
+								mnemonic_stream[255-mptr*8-16 -: 16] = out;
+
 								// 2
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
 								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
+
+
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+
+
+								mptr = mptr + 4;
+
 							end
-			  //              $display("Op2Size:16");
+			                //$display("Op2Size:16");
 						end
 				2'b10:  begin
 							if(flag2==1'b1) begin 
@@ -365,6 +422,9 @@ task decode_instr;
 								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
+
+
+								mnemonic_stream[255-mptr*8-48 -: 16] = out;
 								
 								// 2
 								ibyte[7:0] = buffer[bo*8 +: 8];
@@ -373,6 +433,9 @@ task decode_instr;
 								optr = optr + 3;
 								bo = bo + 1;
 								
+
+								mnemonic_stream[255-mptr*8-32 -: 16] = out;
+
 								// 3
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
@@ -380,14 +443,23 @@ task decode_instr;
 								optr = optr + 3;
 								bo = bo + 1;
 
+
+								mnemonic_stream[255-mptr*8-16 -: 16] = out;
+
 								// 4
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
 								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
+
+
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+
+								mptr = mptr + 8;
+
 							end
-				//            $display("Op2Size:32");
+				            //$display("Op2Size:32");
 						end
 				2'b11:  begin
 							if(flag2==1'b1) begin 
@@ -401,6 +473,9 @@ task decode_instr;
 								optr = optr + 3;
 								bo = bo + 1;
 
+
+								mnemonic_stream[255-mptr*8-112 -: 16] = out;
+
 								// 2
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
@@ -408,12 +483,17 @@ task decode_instr;
 								optr = optr + 3;
 								bo = bo + 1;
 
+
+								mnemonic_stream[255-mptr*8-96 -: 16] = out;
+
 								// 3
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
 								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
+
+								mnemonic_stream[255-mptr*8-80 -: 16] = out;
 								
 								// 4
 								ibyte[7:0] = buffer[bo*8 +: 8];
@@ -421,6 +501,9 @@ task decode_instr;
 								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
+
+								mnemonic_stream[255-mptr*8-64 -: 16] = out;
+
 							
 								// 5
 								ibyte[7:0] = buffer[bo*8 +: 8];
@@ -429,12 +512,17 @@ task decode_instr;
 								optr = optr + 3;
 								bo = bo + 1;
 
+								mnemonic_stream[255-mptr*8-48 -: 16] = out;
+
+
 								// 6
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
 								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
+
+								mnemonic_stream[255-mptr*8-32 -: 16] = out;
 
 								// 7
 								ibyte[7:0] = buffer[bo*8 +: 8];
@@ -443,14 +531,20 @@ task decode_instr;
 								optr = optr + 3;
 								bo = bo + 1;
 
+								mnemonic_stream[255-mptr*8-16 -: 16] = out;
+
 								// 8
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
 								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
+
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+
+								mptr =  mptr + 16; 
 							end
-				  //          $display("Op2Size:64");
+				            //$display("Op2Size:64");
 						end
 				default: $display("Op2Size:Error in op2size recognition !!");
 			endcase
@@ -1049,6 +1143,17 @@ task decode;
 		if (dispsize == 0);
 	end
 
+endtask
+
+task endianswap;
+	output logic[63:0] swapped;
+	input  logic[63:0] given;
+
+	begin
+		for (int i = 1 ; i <= 32'd8 ; i++) begin
+			swapped[63 - 8*i -: 8] = given[8*i +:8];  
+		end
+	end
 endtask
 
 endmodule

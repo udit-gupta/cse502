@@ -1,11 +1,16 @@
-module ALU(
-	output logic[63:0] res,
-	input logic[63:0] op1,
-	input logic[63:0] op2,
-	input logic[7:0] oper
+module EX(
 );
 
-	always_comb begin
+
+task alu;
+	output logic[3:0] out_dest_reg;
+	output logic[63:0] res;
+	input logic[7:0] oper;
+	input logic[63:0] op1;
+	input logic[63:0] op2;
+	input logic[3:0] in_dest_reg;
+
+begin
 		case (oper[7:0])
 			// ADD instruction
 			8'h0:   res = op1 + op2;
@@ -14,9 +19,9 @@ module ALU(
 			8'h3:   res = op1 + op2;
 			8'h4:   res = op1 + op2;
 			8'h5:   res = op1 + op2;
-			// 8'h80:  res = op1 + op2;
-			// 8'h81:  res = op1 + op2;
-			// 8'h83:  res = op1 + op2;
+			8'h80:  res = op1 + op2;
+			8'h81:  res = op1 + op2;
+			8'h83:  res = op1 + op2;
 
 			// SUB instruction
 			8'h28:  res = op1 - op2;
@@ -98,7 +103,46 @@ module ALU(
 			// 8'h81:  res = op1 - op2;
 			// 8'h83:  res = op1 - op2;
 
-			default: res = 64'b0;
+			// MOV instruction
+			8'h88: res = op2;
+			8'h89: res = op2;
+			8'h8A: res = op2;
+			8'h8B: res = op2;
+			8'h8C: res = op2;
+			8'h8E: res = op2;
+			8'hA0: res = op2;
+			8'hA1: res = op2;
+			8'hA2: res = op2;
+			8'hA3: res = op2; 
+			8'hB0: res = op2;
+			8'hB1: res = op2;
+			8'hB2: res = op2;
+			8'hB3: res = op2;
+			8'hB4: res = op2;
+			8'hB5: res = op2;
+			8'hB6: res = op2;
+			8'hB7: res = op2;
+			8'hB8: res = op2;
+			8'hB9: res = op2;
+			8'hBA: res = op2;
+			8'hBB: res = op2;
+			8'hBC: res = op2;
+			8'hBD: res = op2;
+			8'hBE: res = op2;
+			8'hBF: res = op2;
+			8'hC6: res = op2;
+			8'hC7: res = op2;
+
+
+			default:
+			begin 
+				res = 64'b0;
+				$display("EX: Instruction %x not supported by ALU", oper[7:0]);
+			end
 		endcase
+			out_dest_reg[3:0] = in_dest_reg[3:0];
+			$display("EX: op1=%x op2=%x res=%x destreg=%x inst=%x", op1[63:0], op2[63:0], res[63:0],out_dest_reg[3:0],oper[7:0]);
 	end
+endtask
+
 endmodule

@@ -1,4 +1,4 @@
-module Decoder2(
+module ID(
 	output logic[3:0] byte_incr, 
 	output logic[359:0] opcode_stream,
     output logic[255:0] mnemonic_stream,
@@ -33,6 +33,8 @@ logic [1:0] num_inst_bytes;
 
 logic[63:0] grpop;
 logic[0:0] grpflag;
+logic[63:0] dest_val_sw;
+logic[63:0] src_val_sw;
 //logic[63:0] t1 = 64'hAABBCCDD11223344;
 //logic[63:0] t2 = 64'b0;
 
@@ -46,7 +48,7 @@ typedef logic[63:0] mystring;
 
 typedef enum {
 	REGISTER,
-	MEOMORY,
+	MEMORY,
 	IMM
 } operand_t;
 
@@ -188,7 +190,8 @@ task decode_instr;
 							if(flag1==1'b1) begin
 								incr1=4'd1;
 								ibyte[7:0] = buffer[bo*8 +: 8];
-								dest_val[63:0] = { 56'b0,  buffer[bo*8 +: 8]};
+								dest_val_sw[63:0] = { buffer[bo*8 +: 8], 56'b0};
+								endianswap(dest_val[63:0],dest_val_sw[63:0]);
 								toascii(out,ibyte[7:0]);
 								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
@@ -202,7 +205,8 @@ task decode_instr;
 				2'b01: begin
 							if(flag1==1'b1) begin
 								incr1=4'd2;
-								dest_val[63:0] = { 48'b0,  buffer[bo*8 +: 16]};
+								dest_val_sw[63:0] = { buffer[bo*8 +: 16], 48'b0};
+								endianswap(dest_val[63:0],dest_val_sw[63:0]);
 								// 1
 								toascii(out,ibyte[7:0]);
 								opcode_stream[359-optr*8 -: 16] = out;
@@ -228,7 +232,8 @@ task decode_instr;
 							if(flag1==1'b1) begin
 								incr1=4'd4;
 
-								dest_val[63:0] = { 32'b0,  buffer[bo*8 +: 32]};
+								dest_val_sw[63:0] = { buffer[bo*8 +: 32], 32'b0};
+								endianswap(dest_val[63:0],dest_val_sw[63:0]);
 								// 1
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
@@ -275,7 +280,8 @@ task decode_instr;
 							if(flag1==1'b1) begin
 								incr1=4'd8;
 
-								dest_val[63:0] = buffer[bo*8 +: 64];
+								dest_val_sw[63:0] = buffer[bo*8 +: 64];
+								endianswap(dest_val[63:0],dest_val_sw[63:0]);
 								// 1
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
@@ -370,7 +376,8 @@ task decode_instr;
 							if(flag2==1'b1) begin 
 								incr2=4'd1;
 								ibyte[7:0] = buffer[bo*8 +: 8];
-								src_val[63:0] = { 56'b0,  buffer[bo*8 +: 8]};
+								src_val_sw[63:0] = { buffer[bo*8 +: 8], 56'b0};
+								endianswap(src_val[63:0],src_val_sw[63:0]);
 								toascii(out,ibyte[7:0]);
 								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
@@ -385,7 +392,9 @@ task decode_instr;
 							if(flag2==1'b1) begin 
 								incr2=4'd2;
 
-								dest_val[63:0] = { 48'b0,  buffer[bo*8 +: 16]};
+								// dest_val[63:0] = { 48'b0,  buffer[bo*8 +: 16]};
+								src_val_sw[63:0] = { buffer[bo*8 +: 16], 48'b0};
+								endianswap(src_val[63:0],src_val_sw[63:0]);
 								// 1
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
@@ -415,7 +424,9 @@ task decode_instr;
 							if(flag2==1'b1) begin 
 								incr2=4'd4;
 
-								src_val[63:0] = { 32'b0,  buffer[bo*8 +: 32]};
+								//src_val_sw[63:32] = { 32'b0,  buffer[bo*8 +: 32]};
+								src_val_sw[63:0] = { buffer[bo*8 +: 32], 32'b0};
+								endianswap(src_val[63:0],src_val_sw[63:0]);
 								// 1
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);
@@ -465,7 +476,8 @@ task decode_instr;
 							if(flag2==1'b1) begin 
 								incr2=4'd8;
 
-								src_val[63:0] = buffer[bo*8 +: 64];
+								src_val_sw[63:0] = buffer[bo*8 +: 64];
+								endianswap(src_val[63:0],src_val_sw[63:0]);
 								// 1
 								ibyte[7:0] = buffer[bo*8 +: 8];
 								toascii(out,ibyte[7:0]);

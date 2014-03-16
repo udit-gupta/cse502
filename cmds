@@ -1,0 +1,3 @@
+ make run | tail -n+4 | sed 's/ ,/,/g' | sed 's/,00*/,0/g' | sed 's/,0/,/g' > out.txt
+objdump -w -d -M intel prog3 | tail -n+7  | sed 's/^  //g' | sed 's/^/0000000000/g' | sed 's/0x/0/g' | sed 's/,0/,/g' > base.txt
+gcc -o myprog1 -Wl,-Ttext,0x8000e0 -nostdlib -nostdinc myprog1.s

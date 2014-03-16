@@ -10,7 +10,7 @@ task write_back;
 
 	begin
 		regx[dst_reg[3:0]][63:0] = res[63:0];
-		$display("WB: dstreg=%x val=%x",dst_reg[3:0], regx[dst_reg[3:0]][63:0]); 
+//		$display("WB: dstreg=%x val=%x",dst_reg[3:0], regx[dst_reg[3:0]][63:0]); 
 		if(regx[dst_reg[3:0]]==64'b0);
 		
 	end

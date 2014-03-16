@@ -36,7 +36,7 @@ task operand_fetch;
 			else begin
 				oper2[7:0] = opsrcval[7:0];
 			end
-			$display("OF: Operands %x %x", oper1[7:0], oper2[7:0]);
+	//		$display("OF: Operands %x %x", oper1[7:0], oper2[7:0]);
 		end
 		2'b01: begin
 			oper1[15:0] = regx[opdestval[3:0]][15:0];
@@ -46,7 +46,7 @@ task operand_fetch;
 			else begin
 				oper2[15:0] = opsrcval[15:0];
 			end
-			$display("OF: Operands %x %x", oper1[7:0], oper2[7:0]);
+	//		$display("OF: Operands %x %x", oper1[7:0], oper2[7:0]);
 		end
 		2'b10: begin 
 			oper1[31:0] = regx[opdestval[3:0]][31:0];
@@ -56,7 +56,7 @@ task operand_fetch;
 			else begin
 				oper2[31:0] = opsrcval[31:0];
 			end
-			$display("OF: Operands %x %x", oper1[7:0], oper2[7:0]);
+		//	$display("OF: Operands %x %x", oper1[7:0], oper2[7:0]);
 		end
 		2'b11: begin
 			oper1[63:0] = regx[opdestval[3:0]][63:0];
@@ -66,13 +66,13 @@ task operand_fetch;
 			else begin
 				oper2[63:0] = opsrcval[63:0];
 			end
-			$display("OF: Operands %x %x", oper1[7:0], oper2[7:0]);
+	//		$display("OF: Operands %x %x", oper1[7:0], oper2[7:0]);
 		end
 		default:;
 	endcase
 
 	dstreg[3:0] = opdestval[3:0];
-	$display("OF: dstreg=%x",dstreg[3:0]);	
+//	$display("OF: dstreg=%x",dstreg[3:0]);	
 
 
 	// To suppress errors 

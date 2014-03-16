@@ -145,7 +145,11 @@ task decode_instr;
 	end
 
 		if (num_op[1:0] > 2'd1) begin 
-			
+			mptr =  mptr - 1;
+			mnemonic_stream[255-mptr*8 -: 8] = 8'h2C;  // comma
+			mptr = mptr + 1;
+
+
 			case(instr_info[18:17])
 				2'b00: begin
 						src_type = REGISTER;
@@ -367,9 +371,9 @@ task decode_instr;
 
 		if (num_op[1:0] > 2'd1) begin 
         
-			mptr =  mptr - 1;
-			mnemonic_stream[255-mptr*8 -: 8] = 8'h2C;  // comma
-			mptr = mptr + 1;
+		//	mptr =  mptr - 1;
+		//	mnemonic_stream[255-mptr*8 -: 8] = 8'h2C;  // comma
+		//	mptr = mptr + 1;
 			src_size[1:0] = instr_info[14:13];
 			case(instr_info[14:13])
 				2'b00:  begin

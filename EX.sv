@@ -137,11 +137,11 @@ begin
 			default:
 			begin 
 				res = 64'b0;
-				$display("EX: Instruction %x not supported by ALU", oper[7:0]);
+		//		$display("EX: Instruction %x not supported by ALU", oper[7:0]);
 			end
 		endcase
 			out_dest_reg[3:0] = in_dest_reg[3:0];
-			$display("EX: op1=%x op2=%x res=%x destreg=%x inst=%x", op1[63:0], op2[63:0], res[63:0],out_dest_reg[3:0],oper[7:0]);
+		//	$display("EX: op1=%x op2=%x res=%x destreg=%x inst=%x", op1[63:0], op2[63:0], res[63:0],out_dest_reg[3:0],oper[7:0]);
 	end
 endtask
 

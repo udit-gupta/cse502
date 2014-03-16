@@ -76,10 +76,15 @@ task decode_instr;
     logic[3:0] incr2; 
     logic[3:0] incr; 
     logic[7:0] ibyte; 
+	logic[15:0] idbyte;
+	logic[31:0] iqbyte;
 	logic[15:0] out;
     logic[31:0] bo;
 	logic[23:0] opstr;
     
+//	logic[31:0] out2;
+//	logic[63:0] out3;
+//	logic[127:0] out4;
 
     begin        
       //  $display("\n");
@@ -193,16 +198,68 @@ task decode_instr;
 				2'b00:  begin
 							if(flag1==1'b1) begin
 								incr1=4'd1;
+								
 								ibyte[7:0] = buffer[bo*8 +: 8];
-								dest_val_sw[63:0] = { buffer[bo*8 +: 8], 56'b0};
+							    if (ibyte[7]==1'b1) begin
+									$display("flag 1 Inside 1");
+									dest_val_sw[63:0] = { buffer[bo*8 +: 8], 56'hffffffffffffff};
+								end
+								else begin	
+									$display("flag 1 Inside 0");
+									dest_val_sw[63:0] = { buffer[bo*8 +: 8], 56'b0};
+								end
+								
+								
+								
+							//	dest_val_sw[63:0] = { buffer[bo*8 +: 8], 56'b0};
 								endianswap(dest_val[63:0],dest_val_sw[63:0]);
 								toascii(out,ibyte[7:0]);
 								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
 
+
+								toascii(out,dest_val_sw[7:0]);
 								mnemonic_stream[255-mptr*8 -: 16] = out;
 								mptr = mptr + 2;
+
+
+								toascii(out,dest_val_sw[15:8]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+								toascii(out,dest_val_sw[23:16]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+								toascii(out,dest_val_sw[31:24]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+								toascii(out,dest_val_sw[39:32]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+								toascii(out,dest_val_sw[47:40]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+								toascii(out,dest_val_sw[55:48]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+
+								toascii(out,dest_val_sw[63:56]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+
+
+
+
+
+							//	mnemonic_stream[255-mptr*8 -: 16] = out;
+							//	mptr = mptr + 2;
 							end
 			                // $display("Op1Size:8");
 						end
@@ -217,7 +274,7 @@ task decode_instr;
 								optr = optr + 3;
 								bo = bo + 1;
 
-								mnemonic_stream[255-mptr*8-16 -: 16] = out;
+							//	mnemonic_stream[255-mptr*8-16 -: 16] = out;
 
 								// 2
 								ibyte[7:0] = buffer[bo*8 +: 8];
@@ -226,9 +283,46 @@ task decode_instr;
 								optr = optr + 3;
 								bo = bo + 1;
 
-								mnemonic_stream[255-mptr*8 -: 16] = out;
 
-								mptr = mptr + 4;
+
+								toascii(out,dest_val_sw[7:0]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+
+								toascii(out,dest_val_sw[15:8]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+								toascii(out,dest_val_sw[23:16]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+								toascii(out,dest_val_sw[31:24]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+								toascii(out,dest_val_sw[39:32]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+								toascii(out,dest_val_sw[47:40]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+								toascii(out,dest_val_sw[55:48]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+
+								toascii(out,dest_val_sw[63:56]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+
+							//	mnemonic_stream[255-mptr*8 -: 16] = out;
+
+							//	mptr = mptr + 4;
 							end
 				//            $display("Op1Size:16");
 						end
@@ -245,7 +339,7 @@ task decode_instr;
 								optr = optr + 3;
 								bo = bo + 1;
 
-								mnemonic_stream[255-mptr*8-48 -: 16] = out;
+							//	mnemonic_stream[255-mptr*8-48 -: 16] = out;
 
 								// 2
 								ibyte[7:0] = buffer[bo*8 +: 8];
@@ -255,7 +349,7 @@ task decode_instr;
 								bo = bo + 1;
 
 
-								mnemonic_stream[255-mptr*8-32 -: 16] = out;
+							//	mnemonic_stream[255-mptr*8-32 -: 16] = out;
 
 								// 3
 								ibyte[7:0] = buffer[bo*8 +: 8];
@@ -264,7 +358,7 @@ task decode_instr;
 								optr = optr + 3;
 								bo = bo + 1;
 
-								mnemonic_stream[255-mptr*8-16 -: 16] = out;
+							//	mnemonic_stream[255-mptr*8-16 -: 16] = out;
 
 								// 4
 								ibyte[7:0] = buffer[bo*8 +: 8];
@@ -273,9 +367,45 @@ task decode_instr;
 								optr = optr + 3;
 								bo = bo + 1;
 
-								mnemonic_stream[255-mptr*8 -: 16] = out;
 
-								mptr = mptr + 8;
+								toascii(out,dest_val_sw[7:0]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+
+								toascii(out,dest_val_sw[15:8]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+								toascii(out,dest_val_sw[23:16]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+								toascii(out,dest_val_sw[31:24]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+								toascii(out,dest_val_sw[39:32]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+								toascii(out,dest_val_sw[47:40]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+								toascii(out,dest_val_sw[55:48]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+
+								toascii(out,dest_val_sw[63:56]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+
+							//	mnemonic_stream[255-mptr*8 -: 16] = out;
+
+							//	mptr = mptr + 8;
 
 							end
 				  //          $display("Op1Size:32");
@@ -293,7 +423,7 @@ task decode_instr;
 								optr = optr + 3;
 								bo = bo + 1;
 
-								mnemonic_stream[255-mptr*8-112 -: 16] = out;
+							//	mnemonic_stream[255-mptr*8-112 -: 16] = out;
 
 								// 2
 								ibyte[7:0] = buffer[bo*8 +: 8];
@@ -302,7 +432,7 @@ task decode_instr;
 								optr = optr + 3;
 								bo = bo + 1;
 
-								mnemonic_stream[255-mptr*8-96 -: 16] = out;
+							//	mnemonic_stream[255-mptr*8-96 -: 16] = out;
 
 								// 3
 								ibyte[7:0] = buffer[bo*8 +: 8];
@@ -311,7 +441,7 @@ task decode_instr;
 								optr = optr + 3;
 								bo = bo + 1;
 
-								mnemonic_stream[255-mptr*8-80 -: 16] = out;
+							//	mnemonic_stream[255-mptr*8-80 -: 16] = out;
 
 								// 4
 								ibyte[7:0] = buffer[bo*8 +: 8];
@@ -320,7 +450,7 @@ task decode_instr;
 								optr = optr + 3;
 								bo = bo + 1;
 
-								mnemonic_stream[255-mptr*8-64 -: 16] = out;
+							//	mnemonic_stream[255-mptr*8-64 -: 16] = out;
 
 								// 5
 								ibyte[7:0] = buffer[bo*8 +: 8];
@@ -329,7 +459,7 @@ task decode_instr;
 								optr = optr + 3;
 								bo = bo + 1;
 
-								mnemonic_stream[255-mptr*8-48 -: 16] = out;
+							//	mnemonic_stream[255-mptr*8-48 -: 16] = out;
 
 								// 6
 								ibyte[7:0] = buffer[bo*8 +: 8];
@@ -338,7 +468,7 @@ task decode_instr;
 								optr = optr + 3;
 								bo = bo + 1;
 
-								mnemonic_stream[255-mptr*8-32 -: 16] = out;
+							//	mnemonic_stream[255-mptr*8-32 -: 16] = out;
 
 								// 7
 								ibyte[7:0] = buffer[bo*8 +: 8];
@@ -347,7 +477,7 @@ task decode_instr;
 								optr = optr + 3;
 								bo = bo + 1;
 
-								mnemonic_stream[255-mptr*8-16 -: 16] = out;
+							//	mnemonic_stream[255-mptr*8-16 -: 16] = out;
 								
 								// 8
 								ibyte[7:0] = buffer[bo*8 +: 8];
@@ -356,9 +486,45 @@ task decode_instr;
 								optr = optr + 3;
 								bo = bo + 1;
 
-								mnemonic_stream[255-mptr*8 -: 16] = out;
+							//	mnemonic_stream[255-mptr*8 -: 16] = out;
 
-								mptr = mptr + 16;
+							//	mptr = mptr + 16;
+
+
+
+								toascii(out,dest_val_sw[7:0]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+
+								toascii(out,dest_val_sw[15:8]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+								toascii(out,dest_val_sw[23:16]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+								toascii(out,dest_val_sw[31:24]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+								toascii(out,dest_val_sw[39:32]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+								toascii(out,dest_val_sw[47:40]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+								toascii(out,dest_val_sw[55:48]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+
+								toascii(out,dest_val_sw[63:56]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
 
 							end
 					//        $display("Op1size:64");
@@ -380,24 +546,75 @@ task decode_instr;
 							if(flag2==1'b1) begin 
 								incr2=4'd1;
 								ibyte[7:0] = buffer[bo*8 +: 8];
-								src_val_sw[63:0] = { buffer[bo*8 +: 8], 56'b0};
+							    if (ibyte[7]==1'b1) begin
+									$display("Inside 1");
+									src_val_sw[63:0] = { buffer[bo*8 +: 8], 56'hffffffffffffff};
+								end
+								else begin	
+									$display("Inside 0");
+									src_val_sw[63:0] = { buffer[bo*8 +: 8], 56'b0};
+								end
 								endianswap(src_val[63:0],src_val_sw[63:0]);
 								toascii(out,ibyte[7:0]);
 								opcode_stream[359-optr*8 -: 16] = out;
 								optr = optr + 3;
 								bo = bo + 1;
-
+								
+								toascii(out,src_val_sw[7:0]);
 								mnemonic_stream[255-mptr*8 -: 16] = out;
 								mptr = mptr + 2;
+
+
+								toascii(out,src_val_sw[15:8]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+								toascii(out,src_val_sw[23:16]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+								toascii(out,src_val_sw[31:24]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+								toascii(out,src_val_sw[39:32]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+								toascii(out,src_val_sw[47:40]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+								toascii(out,src_val_sw[55:48]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+
+								toascii(out,src_val_sw[63:56]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
 							end
 			                //$display("Op2Size:8");
 						end
 				2'b01:  begin
 							if(flag2==1'b1) begin 
 								incr2=4'd2;
+								
+								idbyte[15:0] = buffer[bo*8 +: 16];
+							    if (idbyte[7]==1'b1) begin
+									src_val_sw[63:0] = { buffer[bo*8 +: 16], 48'hffffffffffff};
+								end
+								else begin	
+									src_val_sw[63:0] = { buffer[bo*8 +: 16], 48'b0};
+								end
 
+								if(idbyte[15:8]==8'b0);
+								if(idbyte[6:0]==7'b0);
 								// dest_val[63:0] = { 48'b0,  buffer[bo*8 +: 16]};
-								src_val_sw[63:0] = { buffer[bo*8 +: 16], 48'b0};
+
+
+						//		src_val_sw[63:0] = { buffer[bo*8 +: 16], 48'b0};
 								endianswap(src_val[63:0],src_val_sw[63:0]);
 								// 1
 								ibyte[7:0] = buffer[bo*8 +: 8];
@@ -406,7 +623,7 @@ task decode_instr;
 								optr = optr + 3;
 								bo = bo + 1;
 
-								mnemonic_stream[255-mptr*8-16 -: 16] = out;
+							//	mnemonic_stream[255-mptr*8-16 -: 16] = out;
 
 								// 2
 								ibyte[7:0] = buffer[bo*8 +: 8];
@@ -416,10 +633,44 @@ task decode_instr;
 								bo = bo + 1;
 
 
+								//mnemonic_stream[255-mptr*8 -: 16] = out;
+
+
+							//	mptr = mptr + 4;
+
+								toascii(out,src_val_sw[7:0]);
 								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
 
 
-								mptr = mptr + 4;
+								toascii(out,src_val_sw[15:8]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+								toascii(out,src_val_sw[23:16]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+								toascii(out,src_val_sw[31:24]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+								toascii(out,src_val_sw[39:32]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+								toascii(out,src_val_sw[47:40]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+								toascii(out,src_val_sw[55:48]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+
+								toascii(out,src_val_sw[63:56]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
 
 							end
 			                //$display("Op2Size:16");
@@ -429,7 +680,21 @@ task decode_instr;
 								incr2=4'd4;
 
 								//src_val_sw[63:32] = { 32'b0,  buffer[bo*8 +: 32]};
-								src_val_sw[63:0] = { buffer[bo*8 +: 32], 32'b0};
+							
+								iqbyte[31:0] = buffer[bo*8 +: 32];
+							    if (iqbyte[7]==1'b1) begin
+									src_val_sw[63:0] = { buffer[bo*8 +: 32], 32'hffffffff};
+								end
+								else begin	
+									src_val_sw[63:0] = { buffer[bo*8 +: 32], 32'b0};
+								end
+								
+								
+							if(iqbyte[31:8]==24'b0);
+								if(iqbyte[6:0]==7'b0);
+								
+								
+							//	src_val_sw[63:0] = { buffer[bo*8 +: 32], 32'b0};
 								endianswap(src_val[63:0],src_val_sw[63:0]);
 								// 1
 								ibyte[7:0] = buffer[bo*8 +: 8];
@@ -439,7 +704,7 @@ task decode_instr;
 								bo = bo + 1;
 
 
-								mnemonic_stream[255-mptr*8-48 -: 16] = out;
+//								mnemonic_stream[255-mptr*8-48 -: 16] = out;
 								
 								// 2
 								ibyte[7:0] = buffer[bo*8 +: 8];
@@ -449,7 +714,7 @@ task decode_instr;
 								bo = bo + 1;
 								
 
-								mnemonic_stream[255-mptr*8-32 -: 16] = out;
+//								mnemonic_stream[255-mptr*8-32 -: 16] = out;
 
 								// 3
 								ibyte[7:0] = buffer[bo*8 +: 8];
@@ -459,7 +724,7 @@ task decode_instr;
 								bo = bo + 1;
 
 
-								mnemonic_stream[255-mptr*8-16 -: 16] = out;
+//								mnemonic_stream[255-mptr*8-16 -: 16] = out;
 
 								// 4
 								ibyte[7:0] = buffer[bo*8 +: 8];
@@ -469,9 +734,44 @@ task decode_instr;
 								bo = bo + 1;
 
 
-								mnemonic_stream[255-mptr*8 -: 16] = out;
+//								mnemonic_stream[255-mptr*8 -: 16] = out;
 
-								mptr = mptr + 8;
+//								mptr = mptr + 8;
+
+
+								toascii(out,src_val_sw[7:0]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+
+								toascii(out,src_val_sw[15:8]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+								toascii(out,src_val_sw[23:16]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+								toascii(out,src_val_sw[31:24]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+								toascii(out,src_val_sw[39:32]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+								toascii(out,src_val_sw[47:40]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+								toascii(out,src_val_sw[55:48]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+
+								toascii(out,src_val_sw[63:56]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
 
 							end
 				            //$display("Op2Size:32");
@@ -490,7 +790,7 @@ task decode_instr;
 								bo = bo + 1;
 
 
-								mnemonic_stream[255-mptr*8-112 -: 16] = out;
+							//	mnemonic_stream[255-mptr*8-112 -: 16] = out;
 
 								// 2
 								ibyte[7:0] = buffer[bo*8 +: 8];
@@ -500,7 +800,7 @@ task decode_instr;
 								bo = bo + 1;
 
 
-								mnemonic_stream[255-mptr*8-96 -: 16] = out;
+							//	mnemonic_stream[255-mptr*8-96 -: 16] = out;
 
 								// 3
 								ibyte[7:0] = buffer[bo*8 +: 8];
@@ -509,7 +809,7 @@ task decode_instr;
 								optr = optr + 3;
 								bo = bo + 1;
 
-								mnemonic_stream[255-mptr*8-80 -: 16] = out;
+							//	mnemonic_stream[255-mptr*8-80 -: 16] = out;
 								
 								// 4
 								ibyte[7:0] = buffer[bo*8 +: 8];
@@ -518,7 +818,7 @@ task decode_instr;
 								optr = optr + 3;
 								bo = bo + 1;
 
-								mnemonic_stream[255-mptr*8-64 -: 16] = out;
+							//	mnemonic_stream[255-mptr*8-64 -: 16] = out;
 
 							
 								// 5
@@ -528,7 +828,7 @@ task decode_instr;
 								optr = optr + 3;
 								bo = bo + 1;
 
-								mnemonic_stream[255-mptr*8-48 -: 16] = out;
+							//	mnemonic_stream[255-mptr*8-48 -: 16] = out;
 
 
 								// 6
@@ -538,7 +838,7 @@ task decode_instr;
 								optr = optr + 3;
 								bo = bo + 1;
 
-								mnemonic_stream[255-mptr*8-32 -: 16] = out;
+							//	mnemonic_stream[255-mptr*8-32 -: 16] = out;
 
 								// 7
 								ibyte[7:0] = buffer[bo*8 +: 8];
@@ -547,7 +847,7 @@ task decode_instr;
 								optr = optr + 3;
 								bo = bo + 1;
 
-								mnemonic_stream[255-mptr*8-16 -: 16] = out;
+							//	mnemonic_stream[255-mptr*8-16 -: 16] = out;
 
 								// 8
 								ibyte[7:0] = buffer[bo*8 +: 8];
@@ -556,9 +856,46 @@ task decode_instr;
 								optr = optr + 3;
 								bo = bo + 1;
 
-								mnemonic_stream[255-mptr*8 -: 16] = out;
+							//	mnemonic_stream[255-mptr*8 -: 16] = out;
 
-								mptr =  mptr + 16; 
+							//	mptr =  mptr + 16; 
+
+	
+								toascii(out,src_val_sw[7:0]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+
+								toascii(out,src_val_sw[15:8]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+								toascii(out,src_val_sw[23:16]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+								toascii(out,src_val_sw[31:24]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+								toascii(out,src_val_sw[39:32]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+								toascii(out,src_val_sw[47:40]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+								toascii(out,src_val_sw[55:48]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+
+								toascii(out,src_val_sw[63:56]);
+								mnemonic_stream[255-mptr*8 -: 16] = out;
+								mptr = mptr + 2;
+
+
 							end
 				            //$display("Op2Size:64");
 						end

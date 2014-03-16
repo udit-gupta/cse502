@@ -8,7 +8,7 @@ module ID(
 	input logic[63:0] op2[0:255],
 	input logic[255:0] ModRM,
 	input logic[255:0] ModRM2,
-	input logic[22:0] inst_info[255]
+	input logic[22:0] inst_info[256]
 );
 
 // 'State' for the current instruction 
@@ -87,7 +87,6 @@ task decode_instr;
 //	logic[127:0] out4;
 
     begin        
-      //  $display("\n");
 		incr1 = 4'b0; 
 		incr2 = 4'b0; 
         flag1=1'b0;
@@ -201,11 +200,11 @@ task decode_instr;
 								
 								ibyte[7:0] = buffer[bo*8 +: 8];
 							    if (ibyte[7]==1'b1) begin
-									$display("flag 1 Inside 1");
+								//	$display("flag 1 Inside 1");
 									dest_val_sw[63:0] = { buffer[bo*8 +: 8], 56'hffffffffffffff};
 								end
 								else begin	
-									$display("flag 1 Inside 0");
+								//	$display("flag 1 Inside 0");
 									dest_val_sw[63:0] = { buffer[bo*8 +: 8], 56'b0};
 								end
 								
@@ -547,11 +546,11 @@ task decode_instr;
 								incr2=4'd1;
 								ibyte[7:0] = buffer[bo*8 +: 8];
 							    if (ibyte[7]==1'b1) begin
-									$display("Inside 1");
+								//	$display("Inside 1");
 									src_val_sw[63:0] = { buffer[bo*8 +: 8], 56'hffffffffffffff};
 								end
 								else begin	
-									$display("Inside 0");
+								//	$display("Inside 0");
 									src_val_sw[63:0] = { buffer[bo*8 +: 8], 56'b0};
 								end
 								endianswap(src_val[63:0],src_val_sw[63:0]);
@@ -995,7 +994,7 @@ task check_rex_prefix;
 		end
 
 		next_byte_offset = inst_byte_offset + inc;
-		next_field_type = OPCODE;
+		next_field_type = OPCODE;// | LEGACY_PREFIX;
 
 		// To suprress errors
 		if (rex_bits[3:0] == 0);
@@ -1143,9 +1142,19 @@ task check_grp;
 	else if(instruction[7:0]==8'hf6 || instruction[7:0]==8'hf7) begin
 		grp1flag=1'b1; 
 	end
+	else if(instruction[7:0]==8'hfe) begin
+		grp1flag=1'b1; 
+	end
+	else if(instruction[7:0]==8'hff) begin
+		grp1flag=1'b1; 
+	end
+	else if(instruction[7:0]==8'hff) begin
+		grp1flag=1'b1; 
+	end
 	else begin
 		grp1flag=1'b0; 
 	end
+
 endtask
 
 task update_opgrp; 
@@ -1204,6 +1213,43 @@ task update_opgrp;
 			grp1op="IDIV   ";
 		end
 	end
+	else if(instruction[7:0]==8'hfe) begin
+		if(reg1[2:0]==3'b000) begin
+			grp1op="INC   ";
+		end
+		else if(reg1[2:0]==3'b001) begin
+			grp1op="DEC   ";
+		end
+		else  begin
+			grp1op="INVAL ";
+		end
+	end
+	else if(instruction[7:0]==8'hff) begin
+		if(reg1[2:0]==3'b000) begin
+			grp1op="INC   ";
+		end
+		else if(reg1[2:0]==3'b001) begin
+			grp1op="DEC   ";
+		end
+		else if(reg1[2:0]==3'b010) begin
+			grp1op="CALL   ";
+		end
+		else if(reg1[2:0]==3'b011) begin
+			grp1op="CALLF   ";
+		end
+		if(reg1[2:0]==3'b100) begin
+			grp1op="JMPIN   ";
+		end
+		else if(reg1[2:0]==3'b101) begin
+			grp1op="JMPF   ";
+		end
+		else if(reg1[2:0]==3'b110) begin
+			grp1op="PUSH   ";
+		end
+		else if(reg1[2:0]==3'b111) begin
+			grp1op="       ";
+		end
+	end
 endtask
 
 
@@ -1247,6 +1293,7 @@ task check_opcode;
 
 			check_grp(grpflag,instr[7:0]);
 			if(grpflag==1'b0) begin
+			//	$display("Eroorww !!");
 				mnemonic_stream[255-mptr*8 -: 64] = op[buffer[inst_byte_offset*8 +: 8]];
 				mptr = mptr + 8;
 			end
@@ -1257,11 +1304,11 @@ task check_opcode;
 
 
 		if (RM == 1) begin
-			//$display("ModRM present");
+	//		$display("ModRM present");
 			next_field_type = MOD_RM;
 		end
 		else begin
-			//$display("ModRM absent");
+		//	$display("ModRM absent");
 			next_field_type = LEGACY_PREFIX;
 		end
 		next_byte_offset = inst_byte_offset + inc;
@@ -1298,9 +1345,11 @@ task check_modrm;
 
 
 		check_grp(grpflag,instr[7:0]);
+//		$display("instr = %x \n",instr[7:0]);
 		if(grpflag!=1'b0) begin
 				update_opgrp(grpop,instr[7:0]);
 				mnemonic_stream[255-mptr*8 -: 64] = grpop;
+//				$display("Eroor !!");
 				mptr = mptr + 8;
 		end
 		//get_reg();
@@ -1420,6 +1469,7 @@ task decode;
 	logic[3:0] offs2;
 	logic[3:0] offs3;
 	logic[3:0] offs4;
+//	logic[3:0] offs4b;
 	logic[3:0] offs5;
 	logic[3:0] offs6;
 	logic[3:0] offs7;
@@ -1444,7 +1494,12 @@ task decode;
 		if ((next_fld_type & REX_PREFIX) == REX_PREFIX ) begin
 			check_rex_prefix(offs3,next_fld_type,offs2);
 		end
-
+/*
+		offs4b = offs3;
+		if ((next_fld_type & LEGACY_PREFIX) == LEGACY_PREFIX ) begin
+			check_legacy_prefix(offs4b,next_fld_type,offs3);
+		end
+*/
 		offs4 = offs3;
 		if ((next_fld_type & OPCODE) == OPCODE ) begin
 			check_opcode(offs4,next_fld_type,offs3);

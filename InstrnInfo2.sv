@@ -1,5 +1,5 @@
 module InstrnInfo2(inst_info2);
-output logic[22:0] inst_info2[255];
+output logic[22:0] inst_info2[256];
 
 initial begin
 

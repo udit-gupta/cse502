@@ -131,7 +131,7 @@ module Core (
 	logic [255:0] ModRM2;
 	logic[359:0] opcode_stream;
 	logic[255:0] mnemonic_stream;
-	logic[22:0] inst_info[255];
+	logic[22:0] inst_info[256];
 	//logic[63:0] opr1;
 	//logic[63:0] opr2;
 

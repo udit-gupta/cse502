@@ -11,6 +11,10 @@ typedef enum {
 } operand_t;
 
 task operand_fetch;
+	output logic[0:0] sig_of_nop;
+	output logic[15:0] of_out_req;
+	output logic[15:0] of_out_prov;
+	output logic[3:0] srcreg;
 	output logic[3:0] dstreg;
 	output logic[7:0] oper;
 	output logic[63:0] oper1;
@@ -24,13 +28,31 @@ task operand_fetch;
 	input logic[63:0] opdestval;
 	input logic[1:0] opsrcsize;
 	input logic[1:0] opdestsize;
+	input logic[0:0] num_src_regs;
+	input logic[0:0] sig_of_in_nop;
+
+    logic[15:0] of_requests=16'b0;
+    logic[15:0] of_provides=16'b0;
+
+    
+	$display("Opdestval : %x ", opdestval[63:0]);
+	$display("Opsrcval : %x ", opsrcval[63:0]);
+	$display("Opsrcty : %x ", opsrcty[31:0]);
+	$display("Opdestty : %x ", opdestty[31:0]);
+    if(sig_of_in_nop==1'b1) begin
+        sig_of_nop=1'b1;
+    end
+
+    else begin
 
 	oper[7:0] = operatn;
+
+    $display("of_in= %b ",of_requests);
 
 	case (opsrcsize[1:0])
 		2'b00:  begin
 			oper1[7:0] = regx[opdestval[3:0]][7:0];
-			if (opsrcty == IMM) begin
+			if (opsrcty == REGISTER) begin
 				oper2[7:0] = regx[opsrcval[3:0]][7:0];
 			end 
 			else begin
@@ -40,7 +62,7 @@ task operand_fetch;
 		end
 		2'b01: begin
 			oper1[15:0] = regx[opdestval[3:0]][15:0];
-			if (opsrcty == IMM) begin
+			if (opsrcty == REGISTER) begin
 				oper2[15:0] = regx[opsrcval[3:0]][15:0];
 			end 
 			else begin
@@ -50,7 +72,7 @@ task operand_fetch;
 		end
 		2'b10: begin 
 			oper1[31:0] = regx[opdestval[3:0]][31:0];
-			if (opsrcty == IMM) begin
+			if (opsrcty == REGISTER) begin
 				oper2[31:0] = regx[opsrcval[3:0]][31:0];
 			end 
 			else begin
@@ -60,7 +82,7 @@ task operand_fetch;
 		end
 		2'b11: begin
 			oper1[63:0] = regx[opdestval[3:0]][63:0];
-			if (opsrcty == IMM) begin
+			if (opsrcty == REGISTER) begin
 				oper2[63:0] = regx[opsrcval[3:0]][63:0];
 			end 
 			else begin
@@ -71,9 +93,21 @@ task operand_fetch;
 		default:;
 	endcase
 
-	dstreg[3:0] = opdestval[3:0];
-//	$display("OF: dstreg=%x",dstreg[3:0]);	
+    if(opsrcty==REGISTER) begin
+	    srcreg[3:0] = opsrcval[3:0];
+    end
+    else begin
+	    srcreg[3:0] = 4'hf;
+    end
+    dstreg[3:0] = opdestval[3:0];
+	$display("OF: dstreg=%x",dstreg[3:0]);	
 
+            $display("opsrcval=%x",opsrcval[63:0]);
+    if(opsrcty==REGISTER) begin
+        if(opsrcval[63:0] != 64'hdeadbeefdeadbeef) begin
+            of_requests=1<<opsrcval[3:0];
+        end
+    end
 
 	// To suppress errors 
 	if( regx[16] ==0); 
@@ -88,8 +122,21 @@ task operand_fetch;
 	if(opdestsize==0);
 	if (oper1 == 0);
 	if (oper2 == 0);
-	
+    
+    if(opdestval[63:0]!=64'hffffffffffffffff) begin
+        of_provides=1<<opdestval[3:0];
+    end
+    
+    if(num_src_regs==1'b1) begin
+        of_requests= (of_requests | of_provides);
+    end
+
+    of_out_req=of_requests;
+    of_out_prov=of_provides;
+
+    end
 endtask
+
 
 
 endmodule

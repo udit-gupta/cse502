@@ -79,7 +79,24 @@ module Core (
 		IMM
 	} operand_t;
 
-
+    logic[0:0]  id_out_end=1'b0;
+    logic[0:0]  of_in_end=1'b0;
+    logic[0:0]  of_out_end=1'b0;
+    logic[0:0]  ex_in_end=1'b0;
+    logic[0:0]  ex_out_end=1'b0;
+    logic[0:0]  wb_end=1'b0;
+    logic[0:0]  cl_out_nop_id_stat;
+    logic[0:0]  cl_out_nop_of_stat;
+    logic[0:0]  cl_out_nop_ex_stat;
+    logic[0:0]  id_nsrcregs;
+    logic[0:0]  of_nsrcregs;
+    logic[0:0]  ex_nsrcregs;
+    logic[15:0] id_out_request;
+    logic[15:0] id_out_provide;
+    logic[15:0] of_out_request;
+    logic[15:0] of_out_provide;
+    logic[15:0] ex_out_request;
+    logic[15:0] ex_out_provide;
 	// For ID.decode
 
 	logic[3:0] bytes_decoded_this_cycle;
@@ -87,14 +104,15 @@ module Core (
 	logic[1:0] id_out_numop;
 	operand_t id_out_src_ty;
 	operand_t id_out_dest_ty;
-	logic[63:0] id_out_src_vl;
-	logic[63:0] id_out_dest_vl;
+	logic[63:0] id_out_src_vl;//=64'hdeadbeefdeadbeef;
+	logic[63:0] id_out_dest_vl;//=64'hdeadbeefdeadbeef;
 	logic[1:0] id_out_src_sz;
 	logic[1:0] id_out_dest_sz;
 
 	// For OF.operand_fetch
 
-	logic[3:0] of_out_dest_reg;
+	logic[3:0] of_out_src_reg=4'hf;
+	logic[3:0] of_out_dest_reg=4'hf;
 	logic[7:0] of_out_opr;
 	logic[63:0] of_out_opd1;
 	logic[63:0] of_out_opd2;
@@ -103,8 +121,8 @@ module Core (
 	logic[1:0] of_inp_numop;
 	logic[31:0] of_inp_src_ty;
 	logic[31:0] of_inp_dest_ty;
-	logic[63:0] of_inp_src_vl;
-	logic[63:0] of_inp_dest_vl;
+	logic[63:0] of_inp_src_vl;//=64'hdeadbeefbeefdead;
+	logic[63:0] of_inp_dest_vl;//=64'hdeadbeefbeefdead;
 	logic[1:0] of_inp_src_sz;
 	logic[1:0] of_inp_dest_sz;
 
@@ -113,6 +131,7 @@ module Core (
 
 	logic[3:0] ex_out_dest_reg;
 	logic[3:0] ex_inp_dest_reg;
+	logic[3:0] ex_inp_src_reg;
 	logic[63:0] ex_out_res;
 	logic[7:0] ex_inp_opr;
 	logic[63:0] ex_inp_opd1;
@@ -131,7 +150,7 @@ module Core (
 	logic [255:0] ModRM2;
 	logic[359:0] opcode_stream;
 	logic[255:0] mnemonic_stream;
-	logic[22:0] inst_info[256];
+	logic[23:0] inst_info[256];
 	//logic[63:0] opr1;
 	//logic[63:0] opr2;
 
@@ -145,6 +164,8 @@ module Core (
 	OF of(xreg);
 	EX ex();
 	//WB wb(xreg);
+
+    ControlLogic cl();
 
 	initial begin
 //		xreg[RAX] = 64'h0 ; 
@@ -175,13 +196,23 @@ module Core (
 	//		$display("\n");
 	//		$display("Buffer =>: 0x%x", decode_bytes);
 			//bytes_decoded_this_cycle = 4'b1111;
+            
+            if(wb_end==1'b1) begin
+                $display("In WB");
+                $finish;
+            end
 
-			if (decode_bytes[0:119] == 120'b0 ) begin 
-				$finish;
-			end
-			else begin 
-
-				id.decode(
+/*            if ((decode_bytes[0:119] == 120'b0)) begin 
+		       $display("Decoded ..............!!!!!!!!!!!!!!!");
+                id_end=1'b1; 
+            end */
+  //          else begin  
+                
+                id.decode(
+                    id_out_end,
+                    id_nsrcregs,
+                    id_out_request,
+                    id_out_provide,
 					bytes_decoded_this_cycle,
 					id_out_opr,
 					id_out_numop,
@@ -193,7 +224,15 @@ module Core (
 					id_out_dest_sz
 				);
 
+
+               // $display("no of src regs:  %b ",id_nsrcregs);
+                $display("id_out_Req:  %b ",id_out_request);
+               $display("id_out_prov: %b ",id_out_provide);
 			of.operand_fetch(
+                of_out_end,
+                of_out_request,
+                of_out_provide,
+				of_out_src_reg,
 				of_out_dest_reg,
 				of_out_opr,
 				of_out_opd1,
@@ -206,11 +245,24 @@ module Core (
 				of_inp_src_vl,
 				of_inp_dest_vl,
 				of_inp_src_sz,
-				of_inp_dest_sz
+				of_inp_dest_sz,
+                of_nsrcregs,
+                of_in_end
 			);
 
-			ex.alu(ex_out_dest_reg,ex_out_res,ex_inp_opr,ex_inp_opd1,ex_inp_opd2,ex_inp_dest_reg);
-			
+              //  $display("no of src regs2:  %b ",of_nsrcregs);
+                $display("of_out_Req:  %b ",of_out_request);
+                $display("of_out_prov: %b ",of_out_provide);
+			ex.alu(ex_out_end,ex_out_request,ex_out_provide,ex_out_dest_reg,ex_out_res,ex_inp_opr,ex_inp_opd1,ex_inp_opd2,ex_inp_dest_reg,ex_inp_src_reg,ex_nsrcregs,ex_in_end);
+              //  $display("no of src regs3  %b ",ex_nsrcregs);
+                $display("ex_out_Req:  %b ",ex_out_request);
+                $display("ex_out_prov: %b ",ex_out_provide);
+		
+            
+
+
+            cl.stall(cl_out_nop_id_stat,cl_out_nop_of_stat,cl_out_nop_ex_stat,id_out_request,id_out_provide,of_out_request,of_out_provide,ex_out_request,ex_out_provide);
+
 			//wb.write_back(wb_inp_dest_reg,wb_inp_res);
 
 	//		$display("bytes_decoded_this_cycle : %d", bytes_decoded_this_cycle); 
@@ -219,7 +271,7 @@ module Core (
 
 			if (ModRM[255:0] == 0);
 			if (ModRM2[255:0] == 0);
-			if (inst_info[22:0] == 0);
+			if (inst_info[23:0] == 0);
 			if (mnemonic_stream[255:0] == 0);
 			if (opcode_stream[359:0] == 0);
 
@@ -231,7 +283,7 @@ module Core (
 			//if (decode_bytes == 0 && fetch_state == fetch_idle) $finish;
 			//if (decode_bytes[0:119] == 120'b0 || fetch_state == fetch_idle) $finish;
 			//if (decode_bytes[0:119] == 120'b0 ) $finish;
-			end
+//			end
 		end else begin
 			bytes_decoded_this_cycle = 0;
 		end
@@ -268,8 +320,8 @@ module Core (
 			of_inp_numop <= 0;
 			of_inp_src_ty <= 0;
 			of_inp_dest_ty <= 0;
-			of_inp_src_vl <= 0;
-			of_inp_dest_vl <= 0;
+			of_inp_src_vl <= 0;//64'hdeadbeafbeafdead;
+			of_inp_dest_vl <= 0;//64'hbeafdeaddeadbeef;
 			of_inp_src_sz <= 0;
 			of_inp_dest_sz <= 0;
 
@@ -285,53 +337,75 @@ module Core (
 
 		end else begin // !bus.reset
 
-			decode_offset <= decode_offset + { 3'b0, bytes_decoded_this_cycle };
-			current_addr <= current_addr + { 60'b0, bytes_decoded_this_cycle };
+            //                $display("... id=%x ... of=%x ...  ex=%x \n",cl_out_nop_id_stat,cl_out_nop_of_stat,cl_out_nop_ex_stat);
+            //if(!(cl_out_nop_id_stat) && !(cl_out_nop_of_stat) && !(cl_out_nop_ex_stat)) begin
+            if(!(cl_out_nop_id_stat) && !(cl_out_nop_of_stat) && !(cl_out_nop_ex_stat)) ;begin
 
-			// IDOF pipeline registers 
+  //              $display("bytes_decoded_this_cycle: %d\n",bytes_decoded_this_cycle);
+			    // IDOF pipeline registers
 
-			of_inp_current_addr <= current_addr;
-			of_inp_opr <= id_out_opr;
-			of_inp_numop <= id_out_numop;
-			of_inp_src_ty <= id_out_src_ty;
-			of_inp_dest_ty <= id_out_dest_ty;
-			of_inp_src_vl <= id_out_src_vl;
-			of_inp_dest_vl <= id_out_dest_vl;
-			of_inp_src_sz <= id_out_src_sz;
-			of_inp_dest_sz <= id_out_dest_sz;
+                decode_offset <= decode_offset + { 3'b0, bytes_decoded_this_cycle };
 
+                current_addr <= current_addr + { 60'b0, bytes_decoded_this_cycle };
+			    of_inp_current_addr <= current_addr;
+			    of_inp_opr <= id_out_opr;
+			    of_inp_numop <= id_out_numop;
+			    of_inp_src_ty <= id_out_src_ty;
+			    of_inp_dest_ty <= id_out_dest_ty;
+			    of_inp_src_vl <= id_out_src_vl;
+			    of_inp_dest_vl <= id_out_dest_vl;
+			    of_inp_src_sz <= id_out_src_sz;
+			    of_inp_dest_sz <= id_out_dest_sz;
+                of_nsrcregs <= id_nsrcregs;
+                of_in_end <= id_out_end;
+            end
+          /*  else begin
+                decode_offset <= decode_offset + { 3'b0, 4'b0};
+			    current_addr <= current_addr + { 60'b0, 4'b0};
 
-			// OFEX pipeline registers
+            end */
+            if(!(cl_out_nop_of_stat) && !(cl_out_nop_ex_stat)) ;begin
+			    // OFEX pipeline registers
 
-			ex_inp_opr <= of_out_opr;
-			ex_inp_opd1 <= of_out_opd1;
-			ex_inp_opd2 <= of_out_opd2;
-			ex_inp_dest_reg <= of_out_dest_reg;
+      //          $display("Hello\n");
+			    ex_inp_opr <= of_out_opr;
+			    ex_inp_opd1 <= of_out_opd1;
+			    ex_inp_opd2 <= of_out_opd2;
+			    ex_inp_dest_reg <= of_out_dest_reg;
+			    ex_inp_src_reg <= of_out_src_reg;
+                ex_nsrcregs <= of_nsrcregs;
+                ex_in_end<= of_out_end;
+           end
 
-			// EXWB pipeline registers
+            if(!(cl_out_nop_ex_stat)) ;begin
+        //        $display("Hel\n");
+			    xreg[ex_out_dest_reg[3:0]] <= ex_out_res;
+                wb_end <= ex_out_end;
+            end
+			    // EXWB pipeline registers
 
-			//wb_inp_dest_reg <= ex_out_dest_reg;
-			//wb_inp_res <= ex_out_res;
+			    //wb_inp_dest_reg <= ex_out_dest_reg;
+			    //wb_inp_res <= ex_out_res;
 			
-
-			xreg[RAX] <=  xreg[RAX]; 
-			xreg[RCX] <=  xreg[RCX]; 
-			xreg[RDX] <=  xreg[RDX]; 
-			xreg[RBX] <=  xreg[RBX]; 
-			xreg[RSP] <=  xreg[RSP]; 
-			xreg[RBP] <=  xreg[RBP]; 
-			xreg[RSI] <=  xreg[RSI]; 
-			xreg[RDI] <=  xreg[RDI]; 
-			xreg[R8 ] <= xreg[R8 ] ; 
-			xreg[R9 ] <= xreg[R9 ] ; 
-			xreg[R10] <=  xreg[R10]; 
-			xreg[R11] <=  xreg[R11]; 
-			xreg[R12] <=  xreg[R12]; 
-			xreg[R13] <=  xreg[R13]; 
-			xreg[R14] <=  xreg[R14]; 
-			xreg[R15] <=  xreg[R15]; 
-			xreg[ex_out_dest_reg[3:0]] <= ex_out_res;
-
+          /*      
+			    xreg[RAX] <=  xreg[RAX]; 
+			    xreg[RCX] <=  xreg[RCX]; 
+			    xreg[RDX] <=  xreg[RDX]; 
+			    xreg[RBX] <=  xreg[RBX]; 
+			    xreg[RSP] <=  xreg[RSP]; 
+			    xreg[RBP] <=  xreg[RBP]; 
+			    xreg[RSI] <=  xreg[RSI]; 
+			    xreg[RDI] <=  xreg[RDI]; 
+			    xreg[R8 ] <= xreg[R8 ] ; 
+			    xreg[R9 ] <= xreg[R9 ] ; 
+			    xreg[R10] <=  xreg[R10]; 
+			    xreg[R11] <=  xreg[R11]; 
+			    xreg[R12] <=  xreg[R12]; 
+			    xreg[R13] <=  xreg[R13]; 
+			    xreg[R14] <=  xreg[R14]; 
+			    xreg[R15] <=  xreg[R15]; 
+			    xreg[ex_out_dest_reg[3:0]] <= ex_out_res;*/
+    //        end
 //			$display("RAX = %x", xreg[RAX]);
 //			$display("RBX = %x", xreg[RBX]);
 //			$display("RCX = %x", xreg[RCX]);

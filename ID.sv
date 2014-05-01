@@ -61,7 +61,6 @@ typedef enum { RAX, RCX, RDX, RBX, RSP, RBP, RSI, RDI, R8, R9, R10, R11, R12, R1
 
 
 task decode_instr;
-	output logic[0:0] no_src_regs;
     output logic[3:0] next_byte_offset;
 	output logic[1:0] num_op;
 	output operand_t src_type;
@@ -84,7 +83,10 @@ task decode_instr;
 	logic[15:0] out;
     logic[31:0] bo;
 	logic[23:0] opstr;
-    
+   
+	logic[0:0] no_src_regs;
+
+
 //	logic[31:0] out2;
 //	logic[63:0] out3;
 //	logic[127:0] out4;
@@ -97,7 +99,7 @@ task decode_instr;
         flag2=1'b0;
         bo[31:0] = 32'b0;
         bo[3:0] = inst_byte_offset[3:0];
-     //   $display("Instruction Info: %b %x",inst_info[instr],instr);   
+      //  $display("Instruction Info: %b %x",inst_info[instr],instr);   
         
 //        case(instr_info[22:21])
 //            2'b00: $display("zero operands");
@@ -120,7 +122,7 @@ task decode_instr;
 				2'b00: begin 
 							dest_type = REGISTER;
 							dest_val[63:0] = { 60'b0, rex_bits[2], reg1[2:0] };
-							$display("Op1:register: %x", dest_val[63:0]);
+						//	$display("Op1:register: %x", dest_val[63:0]);
 							reg_symbol(opstr[23:0], {rex_bits[2],reg1[2:0]}, instr_info[16:15],1'b0);
 							mnemonic_stream[255-mptr*8 -: 24] = opstr[23:0];
 							mptr = mptr + 4;
@@ -128,14 +130,14 @@ task decode_instr;
 			   2'b01: begin
 						  dest_type = REGISTER;				
 						  dest_val[63:0] = { 60'b0,  rex_bits[0], rm[2:0] };
-						  $display("Op1:R/M: %x", dest_val[63:0]);
+						//  $display("Op1:R/M: %x", dest_val[63:0]);
 						  reg_symbol(opstr[23:0],{rex_bits[0], rm[2:0]}, instr_info[16:15],1'b0);
 						  mnemonic_stream[255-mptr*8 -: 24] = opstr[23:0];
 						  mptr = mptr + 4;
 					  end
 				2'b10: begin
 							flag1=1'b1;
-		                   $display("Op1:IMMEDIATE");
+		                  // $display("Op1:IMMEDIATE");
 							dest_type = IMM;
                             id_provides=16'b0;
 					   end
@@ -161,7 +163,7 @@ task decode_instr;
 				2'b00: begin
 						src_type = REGISTER;
 						src_val[63:0] = { 60'b0, rex_bits[2], reg1[2:0] };
-						$display("Op2:register: %x", src_val[63:0]);
+					//	$display("Op2:register: %x", src_val[63:0]);
 						reg_symbol(opstr[23:0], {rex_bits[2],reg1[2:0]}, instr_info[14:13],1'b1);
 						mnemonic_stream[255-mptr*8 -: 24] = opstr[23:0];
 						mptr = mptr + 4;
@@ -169,7 +171,7 @@ task decode_instr;
 				2'b01: begin
 						src_type = REGISTER;
 						src_val[63:0] = { 60'b0, rex_bits[0], rm[2:0] };
-						$display("Op2:R/M: %x", src_val[63:0]);
+					//	$display("Op2:R/M: %x", src_val[63:0]);
 						reg_symbol(opstr[23:0] ,{rex_bits[0],rm[2:0]}, instr_info[14:13],1'b1);
 						mnemonic_stream[255-mptr*8 -: 24] = opstr[23:0];
 						mptr = mptr + 4;
@@ -178,7 +180,7 @@ task decode_instr;
 					flag2=1'b1;
 					src_type = IMMEDIATE;
                     id_requests=16'b0;
-					$display("Op2:IMM");
+				//	$display("Op2:IMM");
 				end
 			   2'b11: begin
 					src_type = REGISTER;
@@ -1470,7 +1472,6 @@ endtask
 
 task decode;
 	output logic[0:0] sig_id_nop; 
-	output logic[0:0] num_src_regs;
 	output logic[15:0] id_out_req;
 	output logic[15:0] id_out_prov;
 	output logic[3:0] increment_by;
@@ -1555,14 +1556,13 @@ task decode;
 
 
 		if (num_inst_bytes == 2'b01) begin
-//			$display("One byte instr");
-			decode_instr(num_src_regs,offs8, num_op, src_type, dest_type, src_val, dest_val, src_size, dest_size, offs7);
+		//	$display("One byte instr");
+			decode_instr(offs8, num_op, src_type, dest_type, src_val, dest_val, src_size, dest_size, offs7);
 		end
 //		else
 //			decode_instr2(offs8,offs7);
 		// TODO: handle two byte opcodes
         
-        $display("No. of src regs: %d",num_src_regs);
 		increment_by = offs8;
 		byte_incr = increment_by;
 		operation[7:0] = instr[7:0];
@@ -1580,7 +1580,9 @@ task decode;
 
         id_out_req=id_requests;
         id_out_prov=id_provides;
-    
+   
+        $display("Byte Incr: %d",byte_incr);
+
         end
 	end
     

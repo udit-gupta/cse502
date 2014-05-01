@@ -4,16 +4,12 @@ module EX(
 
 task alu;
 	output logic[0:0] sig_ex_nop;
-	output logic[15:0] ex_out_req;
-	output logic[15:0] ex_out_prov;
 	output logic[3:0] out_dest_reg;
 	output logic[63:0] res;
 	input logic[7:0] oper;
 	input logic[63:0] op1;
 	input logic[63:0] op2;
 	input logic[3:0] in_dest_reg;
-	input logic[3:0] in_src_reg;
-	input logic[0:0] num_src_regs;
 	input logic[0:0] sig_ex_in_nop;
 
 begin
@@ -155,20 +151,8 @@ begin
 			out_dest_reg[3:0] = in_dest_reg[3:0];
 		//	$display("EX: op1=%x op2=%x res=%x destreg=%x inst=%x", op1[63:0], op2[63:0], res[63:0],out_dest_reg[3:0],oper[7:0]);
 
-        if (out_dest_reg[3:0] != 4'hf) begin 
-            ex_out_prov=1<<out_dest_reg[3:0];
-        end
-        if (in_src_reg[3:0] != 4'hf) begin 
-            ex_out_req=1<<in_src_reg[3:0];
-        end
-        else begin
-            ex_out_req=16'b0;
         end
     
-            if(num_src_regs==1'b1) begin
-                ex_out_req=ex_out_req | ex_out_prov;        
-            end
-        end
     end
 endtask
 

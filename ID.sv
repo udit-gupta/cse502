@@ -13,8 +13,8 @@ module ID(
 
 // 'State' for the current instruction 
 //logic signed[31:0] displacement;
-logic[15:0] id_requests;
-logic[15:0] id_provides;
+logic[15:0] id_requests=16'b0;
+logic[15:0] id_provides=16'b0;
 logic[1:0] dispsize;
 logic[31:0] ereg;
 logic[31:0] greg;

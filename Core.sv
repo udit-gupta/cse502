@@ -86,13 +86,13 @@ module Core (
     logic[0:0]  ex_in_end=1'b0;
     logic[0:0]  ex_out_end=1'b0;
     logic[0:0]  wb_in_end=1'b0;
-    logic[0:0]  wb_out_end=1'b0;
+  //  logic[0:0]  wb_out_end=1'b0;
     logic[0:0]  cl_out_nop_id_stat;
     logic[0:0]  cl_out_nop_of_stat;
     logic[0:0]  cl_out_nop_ex_stat;
     logic[0:0]  cl_out_nop_wb_stat;
-    logic[15:0] id_out_request;
-    logic[15:0] id_out_provide;
+    logic[15:0] id_out_request=16'b0;
+    logic[15:0] id_out_provide=16'b0;
 	// For ID.decode
 
 	logic[3:0] bytes_decoded_this_cycle;
@@ -147,7 +147,7 @@ module Core (
 	logic[23:0] inst_info[256];
 	//logic[63:0] opr1;
 	//logic[63:0] opr2;
-    logic[0:0] end_signal;
+   // logic[0:0] end_signal;
 
 	Opcodes opc(opcode_str,ModRM);
 	Opcodes2 opc2(opcode2_str,ModRM2);
@@ -201,9 +201,10 @@ module Core (
             end */
   //          else begin  
                 
-                if(end_signal==1'b1) begin
-                    $finish;
-                end
+              //  if(end_signal==1'b1) begin
+               //     $display("Fuck You !!!!!!!!!!!!");
+                 //   $finish;
+              //  end
 
                 id.decode(
                     id_out_end,
@@ -243,7 +244,8 @@ module Core (
               //  $display("no of src regs2:  %b ",of_nsrcregs);
 			ex.alu(ex_out_end,ex_out_dest_reg,ex_out_res,ex_inp_opr,ex_inp_opd1,ex_inp_opd2,ex_inp_dest_reg,ex_in_end);
 		
-			wb.write_back(wb_out_end,wb_regx,wb_inp_dest_reg,wb_inp_res,wb_in_end);
+			//wb.write_back(wb_out_end,wb_regx,wb_inp_dest_reg,wb_inp_res,wb_in_end);
+			wb.write_back(wb_regx,wb_inp_dest_reg,wb_inp_res,wb_in_end);
         
 			$display("Decod Working !!!!!!!!!!1"); 
 	//		$display("bytes_decoded_this_cycle : %d", bytes_decoded_this_cycle); 
@@ -366,7 +368,7 @@ module Core (
 			    wb_inp_res <= ex_out_res;
         
                 wb_in_end<= ex_out_end;
-                end_signal<=wb_out_end;    
+//                end_signal<=wb_out_end;    
                 xreg <= wb_regx;
             end
 			    // EXWB pipeline registers

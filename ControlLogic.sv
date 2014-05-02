@@ -90,6 +90,7 @@ module ControlLogic (
         end
         else begin
             cl_out_nop_id=1;
+            $display("ID Stalled !!!");
         end
 
         if(cl_out_nop_of_local == 1'b0) begin
@@ -97,6 +98,7 @@ module ControlLogic (
         end
         else begin
             cl_out_nop_of=1;
+            $display("OF Stalled !!!");
         end
 
         if(cl_out_nop_ex_local == 1'b0) begin
@@ -104,6 +106,7 @@ module ControlLogic (
         end
         else begin
             cl_out_nop_ex=1;
+            $display("EX Stalled !!!");
         end
 
         if(cl_out_nop_wb_local == 1'b0) begin
@@ -111,6 +114,7 @@ module ControlLogic (
         end
         else begin
             cl_out_nop_wb=1;
+            $display("WB Stalled !!!");
         end
     end     
 

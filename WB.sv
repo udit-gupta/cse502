@@ -23,7 +23,7 @@ task write_back;
     
 
         if(sig_wb_in_nop==1'b1) begin
-            $display("Indside WB");
+//            $display("Indside WB");
             $finish;
         end
 

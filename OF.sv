@@ -77,7 +77,7 @@ task operand_fetch;
 			end 
 			else if (opsrcty == MEMORY) begin
 				oper2[63:0] = opsrcval[63:0];
-				$display("OF2: MEM: Operands %x %x", oper1[63:0], oper2[63:0]);
+		//		$display("OF2: MEM: Operands %x %x", oper1[63:0], oper2[63:0]);
 			end
 			else begin
 				oper2[31:0] = opsrcval[31:0];

@@ -166,7 +166,7 @@ task decode_instr;
 						  dest_type = REGISTER;
 						  //$display("Op1RegNo: %b", instr_info[12:9]);
 						  dest_val[63:0] = { 60'b0  , instr_info[12:9]};
-					      $display("Op1:fixed operand %x", dest_val[63:0]);
+					    //  $display("Op1:fixed operand %x", dest_val[63:0]);
 						  reg_symbol( opstr[23:0], instr_info[12:9], instr_info[16:15],1'b0);
 						  mnemonic_stream[255-mptr*8 -: 24] = opstr[23:0];
 						  mptr = mptr + 4;
@@ -217,7 +217,7 @@ task decode_instr;
 					src_type = REGISTER;
 					// $display("Op2RegNo: %b", instr_info[12:9]);
 					src_val[63:0] = { 60'b0, instr_info[8:5]};
-					$display("Op2:fix operand %x", src_val[63:0]);
+			//		$display("Op2:fix operand %x", src_val[63:0]);
 					reg_symbol( opstr[23:0], instr_info[12:9], instr_info[16:15],1'b1);
 					mnemonic_stream[255-mptr*8 -: 24] = opstr[23:0];
 					mptr = mptr + 4;
@@ -1740,7 +1740,7 @@ task decode;
         id_out_req=id_requests;
         id_out_prov=id_provides;
    
-        $display("Byte Incr: %d",byte_incr);
+       // $display("Byte Incr: %d",byte_incr);
 
         end
 	end

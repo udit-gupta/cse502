@@ -192,7 +192,7 @@ module Core (
 	//		$display("Buffer =>: 0x%x", decode_bytes);
 			//bytes_decoded_this_cycle = 4'b1111;
             
-            $display("Fetch OFfset:%d , Decode Offset:%d",fetch_offset,decode_offset);
+          //  $display("Fetch OFfset:%d , Decode Offset:%d",fetch_offset,decode_offset);
 
 
 /*            if ((decode_bytes[0:119] == 120'b0)) begin 
@@ -247,7 +247,7 @@ module Core (
 			//wb.write_back(wb_out_end,wb_regx,wb_inp_dest_reg,wb_inp_res,wb_in_end);
 			wb.write_back(wb_regx,wb_inp_dest_reg,wb_inp_res,wb_in_end);
         
-			$display("Decod Working !!!!!!!!!!1"); 
+	//		$display("Decod Working !!!!!!!!!!1"); 
 	//		$display("bytes_decoded_this_cycle : %d", bytes_decoded_this_cycle); 
 		
 
@@ -326,8 +326,8 @@ module Core (
 
          if(!(cl_out_nop_id_stat) && !(cl_out_nop_of_stat) && !(cl_out_nop_ex_stat) && !(cl_out_nop_wb_stat)) begin
 
-            $display("ID Passed !!!!!!");
-                      $display("bytes_decoded_this_cycle: %d\n",bytes_decoded_this_cycle);
+          //  $display("ID Passed !!!!!!");
+            //          $display("bytes_decoded_this_cycle: %d\n",bytes_decoded_this_cycle);
 			    // IDOF pipeline registers
 
                 decode_offset <= decode_offset + { 3'b0, bytes_decoded_this_cycle };
@@ -350,7 +350,7 @@ module Core (
             end */
             if(!(cl_out_nop_of_stat) && !(cl_out_nop_ex_stat) && !(cl_out_nop_wb_stat)) begin
 			    // OFEX pipeline registers
-                $display("OF Passed !!!!!!");
+               // $display("OF Passed !!!!!!");
 
 			    ex_inp_opr <= of_out_opr;
 			    ex_inp_opd1 <= of_out_opd1;
@@ -360,7 +360,7 @@ module Core (
            end
 
             if(!(cl_out_nop_ex_stat) && !(cl_out_nop_wb_stat)) begin
-                $display("EX Passed !!!!!!");
+              //  $display("EX Passed !!!!!!");
 			 //   xreg[ex_out_dest_reg[3:0]] <= ex_out_res;
             //    wb_end <= ex_out_end;
             

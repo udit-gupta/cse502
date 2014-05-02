@@ -3,14 +3,22 @@ module EX(
 
 
 task alu;
+	output logic[0:0] sig_ex_nop;
 	output logic[3:0] out_dest_reg;
 	output logic[63:0] res;
 	input logic[7:0] oper;
 	input logic[63:0] op1;
 	input logic[63:0] op2;
 	input logic[3:0] in_dest_reg;
+	input logic[0:0] sig_ex_in_nop;
 
 begin
+
+        if(sig_ex_in_nop==1'b1) begin
+            sig_ex_nop=sig_ex_in_nop;
+        end
+        else begin
+
 		case (oper[7:0])
 			// ADD instruction
 			8'h0:   res = op1 + op2;
@@ -142,7 +150,10 @@ begin
 		endcase
 			out_dest_reg[3:0] = in_dest_reg[3:0];
 		//	$display("EX: op1=%x op2=%x res=%x destreg=%x inst=%x", op1[63:0], op2[63:0], res[63:0],out_dest_reg[3:0],oper[7:0]);
-	end
+
+        end
+    
+    end
 endtask
 
 endmodule

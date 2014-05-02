@@ -160,7 +160,7 @@ module Core (
 	EX ex();
 	WB wb();
 
-    ControlLogic cl(cl_out_nop_id_stat, cl_out_nop_of_stat, cl_out_nop_ex_stat, cl_out_nop_wb_stat, id_out_request, id_out_provide, bus);
+    ControlLogic cl(cl_out_nop_id_stat, cl_out_nop_of_stat, cl_out_nop_ex_stat, cl_out_nop_wb_stat, id_out_request, id_out_provide);
 
 	initial begin
 //		xreg[RAX] = 64'h0 ; 

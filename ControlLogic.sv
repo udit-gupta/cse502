@@ -4,8 +4,8 @@ module ControlLogic (
 	output[0:0] cl_out_nop_ex,
 	output[0:0] cl_out_nop_wb,
     input[15:0] id_out_req,
-    input[15:0] id_out_prov,
-	/* verilator lint_off UNDRIVEN */ /* verilator lint_off UNUSED */ Sysbus bus /* verilator lint_on UNUSED */ /* verilator lint_on UNDRIVEN */
+    input[15:0] id_out_prov
+//	/* verilator lint_off UNDRIVEN */ /* verilator lint_off UNUSED */ Sysbus bus /* verilator lint_on UNUSED */ /* verilator lint_on UNDRIVEN */
 );            
            
     logic[15:0] temp_fill=16'b0;

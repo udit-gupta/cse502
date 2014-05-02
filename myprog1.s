@@ -1,16 +1,27 @@
 .intel_syntax noprefix
 .text 
 _start:
-add rax, 0x1
-add rbx, 0x2
-add rcx, 0x3
-add rbx, 0x4
-add rsi, 0x7
-add rdx, 0x5
-add r8,  0x9
-add rdx, 0x6
-add rsi, 0x7
-add rdi, 0x8
-add r10,  0x1
-add r14,  0x9
-add r13,  0x9
+mov rsi, 0x2211
+add rcx,rsi
+mov rax, rbx
+/*mov rax,[0x100] */
+mov rax,[rsi]
+mov rax,[rbp-8]
+mov rax,[rbx*4+0x100]
+mov rax,[rdx+rbx*4+8]
+/* add [rax],rbx */
+mov rbx, 0x1122
+mov rcx, 0x11223344
+mov rdx, 0x11222344aabbccdd
+mov rbx, 0x3322
+mov rbx, 0x3322
+mov rbx, 0x3322
+mov rbx, 0x3322
+mov rdx, rsi
+mov rcx, 0x55223344
+mov rcx, 0x66222344aabbccdd
+mov rbx, 0x7722
+mov rcx, 0x88223344
+mov rax, 0x99222344aabbccdd
+mov rax, 0x99222344aabbccdd
+jmp _end

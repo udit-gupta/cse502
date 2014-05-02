@@ -15,7 +15,7 @@ module ID(
 //logic signed[31:0] displacement;
 logic[15:0] id_requests=16'b0;
 logic[15:0] id_provides=16'b0;
-logic[1:0] dispsize;
+logic[2:0] dispsize;
 logic[31:0] ereg;
 logic[31:0] greg;
 logic[1:0] mod;
@@ -40,10 +40,17 @@ logic[63:0] src_val_sw;
 //logic[63:0] t1 = 64'hAABBCCDD11223344;
 //logic[63:0] t2 = 64'b0;
 
+//typedef enum {
+//	UNDEFINED=3'b000,
+//	LEGACY_PREFIX=3'b001, REX_PREFIX=3'b010, OPCODE=3'b011, 
+//	MOD_RM=3'b100, SIB=3'b101, DISPLACEMENT=3'b110, IMMEDIATE=3'b111
+//} inst_field_t; 
+
+
 typedef enum {
-	UNDEFINED=3'b000,
-	LEGACY_PREFIX=3'b001, REX_PREFIX=3'b010, OPCODE=3'b011, 
-	MOD_RM=3'b100, SIB=3'b101, DISPLACEMENT=3'b110, IMMEDIATE=3'b111
+	UNDEFINED=7'b0,
+	LEGACY_PREFIX=7'b1, REX_PREFIX=7'b10, OPCODE=7'b100, 
+	MOD_RM=7'b1000, SIB=7'b10000, DISPLACEMENT=7'b100000, IMMEDIATE=7'b1000000
 } inst_field_t; 
 
 typedef logic[63:0] mystring;
@@ -116,7 +123,11 @@ task decode_instr;
 		num_op[1:0] = instr_info[22:21];
 //		$display("Number of operands %d", num_op[1:0]);
          
+//		$display("MOD: %x", mod[1:0]);
+//		$display("REG: %x", reg1[2:0]);
+//		$display("RM: %x", rm[2:0]);
 		if (num_op[1:0] > 2'd0) begin
+
 
 			case(instr_info[20:19])
 				2'b00: begin 
@@ -128,12 +139,22 @@ task decode_instr;
 							mptr = mptr + 4;
 					  end
 			   2'b01: begin
-						  dest_type = REGISTER;				
-						  dest_val[63:0] = { 60'b0,  rex_bits[0], rm[2:0] };
-						//  $display("Op1:R/M: %x", dest_val[63:0]);
-						  reg_symbol(opstr[23:0],{rex_bits[0], rm[2:0]}, instr_info[16:15],1'b0);
-						  mnemonic_stream[255-mptr*8 -: 24] = opstr[23:0];
-						  mptr = mptr + 4;
+				   		  if (mod == 2'b11) begin
+							  dest_type = REGISTER;				
+							  dest_val[63:0] = { 60'b0,  rex_bits[0], rm[2:0] };
+							  // $display("Op1:R/M: %x", dest_val[63:0]);
+							  reg_symbol(opstr[23:0],{rex_bits[0], rm[2:0]}, instr_info[16:15],1'b0);
+							  mnemonic_stream[255-mptr*8 -: 24] = opstr[23:0];
+							  mptr = mptr + 4;
+					  	  end
+						  else begin
+							  dest_type = MEMORY;				
+							  dest_val[63:0] = { 60'b0,  rex_bits[2], rm[2:0] };
+//							  $display("Op1:M: %x", dest_val[63:0]);
+							  reg_symbol(opstr[23:0],{rex_bits[0], rm[2:0]}, instr_info[16:15],1'b0);
+							  mnemonic_stream[255-mptr*8 -: 24] = opstr[23:0];
+							  mptr = mptr + 4;
+						  end
 					  end
 				2'b10: begin
 							flag1=1'b1;
@@ -169,12 +190,22 @@ task decode_instr;
 						mptr = mptr + 4;
 					end
 				2'b01: begin
-						src_type = REGISTER;
-						src_val[63:0] = { 60'b0, rex_bits[0], rm[2:0] };
-					//	$display("Op2:R/M: %x", src_val[63:0]);
+				   		if (mod == 2'b11) begin
+							src_type = REGISTER;
+							src_val[63:0] = { 60'b0, rex_bits[0], rm[2:0] };
+						// $display("Op2:R/M: %x", src_val[63:0]);
 						reg_symbol(opstr[23:0] ,{rex_bits[0],rm[2:0]}, instr_info[14:13],1'b1);
-						mnemonic_stream[255-mptr*8 -: 24] = opstr[23:0];
-						mptr = mptr + 4;
+							mnemonic_stream[255-mptr*8 -: 24] = opstr[23:0];
+							mptr = mptr + 4;
+						end
+						else begin
+							src_type = MEMORY;
+							src_val[63:0] = { 60'b0, rex_bits[2], rm[2:0] };
+//							$display("Op2:M: %x", src_val[63:0]);
+							reg_symbol(opstr[23:0] ,{rex_bits[0],rm[2:0]}, instr_info[14:13],1'b1);
+							mnemonic_stream[255-mptr*8 -: 24] = opstr[23:0];
+							mptr = mptr + 4;
+						end
 					end
 				2'b10: begin
 					flag2=1'b1;
@@ -261,10 +292,6 @@ task decode_instr;
 								toascii(out,dest_val_sw[63:56]);
 								mnemonic_stream[255-mptr*8 -: 16] = out;
 								mptr = mptr + 2;
-
-
-
-
 
 
 							//	mnemonic_stream[255-mptr*8 -: 16] = out;
@@ -540,7 +567,7 @@ task decode_instr;
 						end
 				default: $display("Op1size:Error in op1size recognition !!");
 			endcase
-		  //  $display("Increment1 : %d", incr1);
+		    // $display("Increment1 : %d", incr1);
 
 	end
 
@@ -910,7 +937,7 @@ task decode_instr;
 						end
 				default: $display("Op2Size:Error in op2size recognition !!");
 			endcase
-			  //  $display("Increment2 : %d", incr2);
+			// $display("Increment2 : %d", incr2);
 
 		end
 
@@ -922,8 +949,7 @@ task decode_instr;
      	if(instr_info[4:0]==5'b0);
         incr=incr1+incr2;
         next_byte_offset=inst_byte_offset+incr;
-		if(dispsize!=2'b00)
-			next_byte_offset=next_byte_offset+{2'b00,dispsize};
+		//next_byte_offset=next_byte_offset+{1'b0,dispsize};
 
 	   // $display("Increment : %d", incr);
     end
@@ -1372,21 +1398,21 @@ task check_modrm;
 		//get_reg();
 
 		if(mod[1:0]==2'b00) begin
-			if(rm[2:0]==3'b110) begin
-				dispsize[1:0]=2'b11;
+			if(rm[2:0]==3'b101) begin
+				dispsize[2:0]=3'd4;
 			end
 			else begin
-				dispsize[1:0]=2'b11;
+				dispsize[2:0]=3'd0;
 			end
 		end
 		else if(mod[1:0]==2'b01) begin
-			dispsize[1:0]=2'b00;
+			dispsize[2:0]=3'd1;
 		end
 		else if(mod[1:0]==2'b10) begin
-			dispsize[1:0]=2'b11;
+			dispsize[2:0]=3'd4;
 		end
 		else begin
-			dispsize[1:0]=2'b00;
+			dispsize[2:0]=3'd0;
 		end
 
 		if(reg1[2:0]==3'b000);   // 
@@ -1394,14 +1420,16 @@ task check_modrm;
 
 
 		next_field_type=LEGACY_PREFIX;
-		if(mod[1:0]!=2'b11 && modrm[2:0] == 3'b100) begin
+		//$display("MOD: %x RM: %x\n", mod[1:0], modrm[2:0]);
+
+		if (mod[1:0] == 2'b11) begin
+			// $display("if entered");
+			next_field_type = next_field_type | LEGACY_PREFIX;
+		end
+		else begin 
+			// $display("else entered");
 			next_field_type = next_field_type | SIB;
 		end
-	/*    if(dispsize[4:0]!=5'd0) begin
-				$display("bye");
-				next_field_type = next_field_type | DISPLACEMENT;
-		end 
-	*/	
 		next_byte_offset = inst_byte_offset + inc;
 
 
@@ -1409,6 +1437,143 @@ task check_modrm;
 		if (ereg[31:0] == 0);
 		if (greg[31:0] == 0);
 
+	end
+endtask
+
+
+task check_sib;
+	output logic[3:0] next_byte_offset;
+	output inst_field_t next_field_type;
+	input logic[3:0] inst_byte_offset;
+	logic[3:0] inc;
+	logic[7:0] sib;
+	logic[1:0] scale;
+	logic[3:0] index;
+	logic[3:0] base;
+	logic[2:0] num_disp_bytes;
+	logic[31:0] disp;
+	logic[31:0] scale_factor;
+	logic[31:0] byte_off;
+	logic[15:0] out1;
+
+	begin
+		//$display("check_sib called");
+		inc = 0;
+		byte_off[31:0]={28'b0,inst_byte_offset} + 1;
+		sib = buffer[inst_byte_offset*8 +: 8];
+		//inc = inc + 1;
+
+		scale[1:0] = (1 << sib[7:6]);
+		index[3:0] = {rex_bits[1], sib[5:3]};
+		base[3:0] = {rex_bits[0], sib[2:0]};
+			
+		 //$display("scale: b%b", scale);
+		 //$display("index: b%b", index);
+		 //$display("base : b%b", base);
+		 if (base[3] == 0);
+
+
+		// $display("mod: %x", mod[1:0]);
+		// $display("mod: %x", modrm[7:6]);
+
+		if ((modrm[1:0] != 2'b11) && (rm[2:0] == 3'b100 ))  begin
+
+			// SIB present
+
+			toascii(out1,sib);	
+			opcode_stream[359-optr*8 -: 16] = out1;
+			optr = optr + 3;
+
+			if (modrm[7:6] == 2'b00 ) begin
+				if (index[3:0] == 4'b0100 ) begin
+					if (base[2:0] == 3'b101 ) begin
+						num_disp_bytes[2:0] = 3'b100;
+						//disp[31:0] = buffer[(byte_off+32'b1)*8 +: 32]; 
+						disp[31:0] = buffer[byte_off*8 +: 32]; 
+
+						//$display("disp: %x", disp[31:0]);
+
+						scale_factor[31:0] = disp[31:0]; 
+						inc = inc + num_disp_bytes + 1;
+						// $display("1");
+					end
+					else begin
+						num_disp_bytes[2:0] = 3'b000;
+						disp[31:0] = 0; 
+						scale_factor[31:0] = {29'b0,base[2:0]}; 
+						inc = inc + num_disp_bytes + 1;
+						// $display("2");
+					end
+				end
+				else if (base[2:0] == 3'b101 ) begin
+					num_disp_bytes[2:0] = 3'b100;
+					//disp[31:0] = buffer[(byte_off+32'b1)*8 +: 32]; 
+					disp[31:0] = buffer[byte_off*8 +: 32]; 
+					scale_factor[31:0] = (index[2:0] * scale[1:0]) + disp[31:0]; 
+					inc = inc + num_disp_bytes + 1;
+					// $display("3");
+				end
+				else begin
+					num_disp_bytes[2:0] = 3'b000;
+					disp[31:0] = 32'b0; 
+					scale_factor[31:0] = (index[2:0] * scale[1:0]) + {29'b0,base[2:0]}; 
+					inc = inc + num_disp_bytes + 1;
+					// $display("4");
+				end
+			end 
+			else if (modrm[7:6] == 2'b01 ) begin
+				if (index[3:0] == 4'b0100 ) begin
+					num_disp_bytes[2:0] = 3'b001;
+				//disp[31:0] = {24'b0, buffer[(byte_off+32'b1)*8 +: 8]}; 
+					disp[31:0] = {24'b0, buffer[byte_off*8 +: 8]}; 
+					scale_factor[31:0] = disp[31:0] + {29'b0,base[2:0]}; 
+					inc = inc + num_disp_bytes + 1;
+					// $display("5");
+				end
+				else begin
+					num_disp_bytes[2:0] = 3'b001;
+				//disp[31:0] = {24'b0, buffer[(byte_off+32'b1)*8 +: 8]}; 
+					disp[31:0] = {24'b0, buffer[byte_off*8 +: 8]}; 
+					scale_factor[31:0] = disp[31:0] + {29'b0,base[2:0]} +(index[2:0] * scale[1:0]) ; 
+					inc = inc + num_disp_bytes + 1;
+					// $display("6");
+				end
+			end
+			else if (modrm[7:6] == 2'b10 ) begin
+				if (index[3:0] == 4'b0100 ) begin
+					num_disp_bytes[2:0] = 3'b100;
+				//disp[31:0] = buffer[(byte_off+1)*8 +: 32]; 
+					disp[31:0] = buffer[byte_off*8 +: 32]; 
+					scale_factor[31:0] = disp[31:0] + {29'b0,base[2:0]}; 
+					inc = inc + num_disp_bytes + 1 ;
+					// $display("7");
+				end
+				else begin
+					num_disp_bytes[2:0] = 3'b100;
+				//disp[31:0] = buffer[(byte_off+1)*8 +: 32]; 
+					disp[31:0] = buffer[byte_off*8 +: 32]; 
+					scale_factor[31:0] = disp[31:0] + {29'b0,base[2:0]} + (index[2:0] * scale[1:0]) ; 
+					inc = inc + num_disp_bytes + 1;
+					// $display("8");
+				end
+			end 
+			else begin
+				 // $display("9");
+			end
+
+		end
+		else begin
+			 // $display("No SIB present");
+		end
+
+		if (scale_factor == 0);
+
+        next_byte_offset = inst_byte_offset + inc;
+        //next_byte_offset = inst_byte_offset + inc - 1;
+		//	next_byte_offset = inc;
+		next_field_type = IMMEDIATE | LEGACY_PREFIX;
+		// $display("Next Byte Offset: %d , Inst_byte_offset: %d, inc:%d ",next_byte_offset,inst_byte_offset,inc);
+		//$display("Scale factor: 0x%x", scale_factor[31:0]);
 	end
 endtask
 
@@ -1537,27 +1702,21 @@ task decode;
 		offs5 = offs4;
 		if ((next_fld_type & MOD_RM) == MOD_RM ) begin
 			check_modrm(offs5,next_fld_type,offs4);
-		//	$display("increment by modrm: %d",offs5);
+			//$display("increment by modrm: %d",offs5);
 		end
 		offs6 = offs5;
-
-		/* TODO: Handle SIB and DISPLACEMENT bytes  */
-
-//		if ((next_fld_type & SIB) == SIB ) begin
-//			check_sib(offs7,next_fld_type,offs6);
-//		end
 		offs7 = offs6;
+		//$display("next_fld_type: %x SIB: %x", next_fld_type, SIB);
+		if ((next_fld_type & SIB) == SIB ) begin
+			check_sib(offs7,next_fld_type,offs6);
+			// $display("increment by SIB: %d",offs7);
+		end
 
-		// TODO: Handle displacement
-//		if ((next_fld_type & DISPLACEMENT) == DISPLACEMENT) begin
-//			check_disp(offs8,next_fld_type,offs7);
-//		end
 		offs8 = offs7;
-
-
 		if (num_inst_bytes == 2'b01) begin
 		//	$display("One byte instr");
 			decode_instr(offs8, num_op, src_type, dest_type, src_val, dest_val, src_size, dest_size, offs7);
+			// $display("increment by decode_instr : %d",offs8);
 		end
 //		else
 //			decode_instr2(offs8,offs7);

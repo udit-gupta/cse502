@@ -1662,7 +1662,6 @@ task decode;
 	inst_field_t next_fld_type;
 
 	begin
-//		$display("Start ............................................................................");
 	
         sig_id_nop=1'b0;
         if(buffer[0:119]==120'b0) begin
@@ -1670,6 +1669,7 @@ task decode;
         end
 
         else begin
+		$display("Start ............................................................................");
 
         instr[7:0] = 0;
 		opcode_stream[359:0] = "                        ";

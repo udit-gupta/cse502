@@ -22,9 +22,9 @@ task write_back;
         if(dstreg[3:0] != 4'hf);
     
 
-        if(sig_wb_in_nop==1'b1) begin
+        if(sig_wb_in_nop==1'b1); begin
 //            $display("Indside WB");
-            $finish;
+//            $finish;
         end
 
 //		$display("WB: dstreg=%x val=%x",dst_reg[3:0], wbregx[dst_reg[3:0]][63:0]); 

@@ -2,13 +2,12 @@ module Core (
 	input[63:0] entry
 ,	/* verilator lint_off UNDRIVEN */ /* verilator lint_off UNUSED */ Sysbus bus /* verilator lint_on UNUSED */ /* verilator lint_on UNDRIVEN */
 );
-	import "DPI-C" function longint syscall_cse502(input longint rax, input longint rdi, input longint rsi, input longint rdx, input longint r10, input longint r8, input longint r9);
 
-	enum { fetch_idle, fetch_waiting, fetch_active } fetch_state;
-	
-    logic[63:0] fetch_rip;
+
+//    enum { fetch_idle, fetch_waiting, fetch_active } fetch_state;
+	logic[63:0] fetch_rip;
 	logic[0:2*64*8-1] decode_buffer; // NOTE: buffer bits are left-to-right in increasing order
-	logic[5:0] fetch_skip;
+//	logic[5:0] fetch_skip;
 	logic[6:0] fetch_offset, decode_offset;
 	logic[63:0] current_addr = entry[63:0];
 	typedef enum { RAX, RCX, RDX, RBX, RSP, RBP, RSI, RDI, R8, R9, R10, R11, R12, R13, R14, R15 } regname;
@@ -20,57 +19,74 @@ module Core (
 	endfunction
 
 	logic send_fetch_req;
-	always_comb begin
+
+/*
+    always_comb begin
 		if (fetch_state != fetch_idle) begin
 			send_fetch_req = 0; // hack: in theory, we could try to send another request at this point
 		end else if (bus.reqack) begin
 			send_fetch_req = 0; // hack: still idle, but already got ack (in theory, we could try to send another request as early as this)
 		end else begin
-			send_fetch_req = (fetch_offset - decode_offset < 7'd32);
-		end
-	end
+*/	assign send_fetch_req = 1;//(fetch_offset - decode_offset < 7'd32);
+//		end
+//	end
 
-	assign bus.respack = bus.respcyc; // always able to accept response
+//	assign bus.respack = bus.respcyc; // always able to accept response
 
 	always @ (posedge bus.clk)
 		if (bus.reset) begin
 
-			fetch_state <= fetch_idle;
 			fetch_rip <= entry & ~63;
-			fetch_skip <= entry[5:0];
+		//	fetch_skip <= entry[5:0];
 			fetch_offset <= 0;
 
 		end else begin // !bus.reset
 
-			bus.reqcyc <= send_fetch_req;
-			bus.req <= fetch_rip & ~63;
-			bus.reqtag <= { bus.READ, bus.MEMORY, 8'b0 };
+		//	bus.reqcyc <= send_fetch_req;
+		//	bus.req <= fetch_rip & ~63;
+		//	bus.reqtag <= { bus.READ, bus.MEMORY, 8'b0 };
+        if(buf_offset2[6:0]==7'b0);
+	
+        if(mem_req_completed) begin
+            
+            buf_offset <= 0;//num_bytes;
+			fetch_rip <= fetch_rip + 64; //{57'b0, num_bytes};
+    decode_buffer[buf_offset*8 +: 64*8]  <= mem_buffer[buf_offset*8 +: 64*8] ;
 
-			if (bus.respcyc) begin
-				assert(!send_fetch_req) else $fatal;
-				fetch_state <= fetch_active;
-				fetch_rip <= fetch_rip + 8;
-				if (fetch_skip > 0) begin
-					fetch_skip <= fetch_skip - 8;
-				end else begin
-					decode_buffer[fetch_offset*8 +: 64] <= bus.resp;
+            $display("DDECODEBUFFER: %x",decode_buffer);
+            //fetch_offset <= fetch_offset+8;
+            fetch_offset <= fetch_offset+64;//num_bytes;
+        end
+        
+        $display("Fetch Rip : %x, num_bytes: %d, buf_offset: %d",fetch_rip,num_bytes,buf_offset);        
+      //  if (bus.respcyc) begin
+		//		assert(!send_fetch_req) else $fatal;
+		//		fetch_state <= fetch_active;
+		//		fetch_rip <= fetch_rip + 8;
+		//		if (fetch_skip > 0) begin
+		//			fetch_skip <= fetch_skip - 8;
+				//end else begin
+					//decode_buffer[fetch_offset*8 +: 64] <= bus.resp;
 					//$display("fill at %d: %x [%x]", fetch_offset, bus.resp, decode_buffer);
-					fetch_offset <= fetch_offset + 8;
-				end
-			end else begin
+			//		fetch_offset <= fetch_offset + 8;
+			//	end
+	/*		end else begin
 				if (fetch_state == fetch_active) begin
 					fetch_state <= fetch_idle;
 				end else if (bus.reqack) begin
 					assert(fetch_state == fetch_idle) else $fatal;
 					fetch_state <= fetch_waiting;
 				end
-			end
+			end*/
 
 		end
 
 	wire[0:(128+15)*8-1] decode_bytes_repeated = { decode_buffer, decode_buffer[0:15*8-1] }; // NOTE: buffer bits are left-to-right in increasing order
 	wire[0:15*8-1] decode_bytes = decode_bytes_repeated[decode_offset*8 +: 15*8]; // NOTE: buffer bits are left-to-right in increasing order
+//	wire[0:15*8-1] decode_bytes = decode_bytes_repeated[0*8 +: 15*8]; // NOTE: buffer bits are left-to-right in increasing order
+//   wire[0:15*8-1] decode_bytes = decode_buffer[decode_offset*8 +: 15*8]; // NOTE: buffer bits are left-to-right in increasing order
 	wire can_decode = (fetch_offset - decode_offset >= 7'd15);
+
 
 	function logic opcode_inside(logic[7:0] value, low, high);
 		opcode_inside = (value >= low && value <= high);
@@ -152,12 +168,21 @@ module Core (
 	//logic[63:0] opr2;
    // logic[0:0] end_signal;
 
+
+	logic[0:0] mem_req_completed;
+	logic[6:0] num_bytes;
+	//logic[0:2*64*8-1] mem_buffer;
+	logic[0:64*8-1] mem_buffer;
+	logic[6:0] buf_offset;
+	logic[6:0] buf_offset2;
+    
 	Opcodes opc(opcode_str,ModRM);
 	Opcodes2 opc2(opcode2_str,ModRM2);
 	InstrnInfo iinfo(inst_info);
 
 	//Decoder D(bytes_decoded_this_cycle, bus, opcode_stream, mnemonic_stream, current_addr, decode_bytes,op,op2,ModRM,ModRM2);
 
+    MemArbiter Mem(bus,buf_offset2,fetch_rip,mem_buffer,send_fetch_req,mem_req_completed,num_bytes);
 	ID id(bytes_decoded_this_cycle, opcode_stream, mnemonic_stream, current_addr, decode_bytes,opcode_str,opcode2_str,ModRM,ModRM2,inst_info);
 	OF of(xreg);
 	EX ex();
@@ -185,7 +210,7 @@ module Core (
 	end
 
 	always_comb begin
-		//$display("can_decode: %x, decode_offset: %x, fetch_offset: %x", can_decode, decode_offset, fetch_offset);
+		$display("can_decode: %x, decode_offset: %x, fetch_offset: %x", can_decode, decode_offset, fetch_offset);
 		if (can_decode) begin : decode_block
 			// cse502 : Decoder here
 			// remove the following line. It is only here to allow successful compilation in the absence of your code.
@@ -195,17 +220,18 @@ module Core (
 	//		$display("Buffer =>: 0x%x", decode_bytes);
 			//bytes_decoded_this_cycle = 4'b1111;
             
-          //  $display("Fetch OFfset:%d , Decode Offset:%d",fetch_offset,decode_offset);
+            $display("Fetch OFfset:%d , Decode Offset:%d",fetch_offset,decode_offset);
+            $display("Decode Buffer : %x",decode_buffer);
+            $display("Decode Bytes : %x",decode_bytes);
 
-
-/*            if ((decode_bytes[0:119] == 120'b0)) begin 
+          /*  if ((decode_bytes[0:119] == 120'b0)) begin 
 		       $display("Decoded ..............!!!!!!!!!!!!!!!");
                 id_end=1'b1; 
             end */
   //          else begin  
                 
               //  if(end_signal==1'b1) begin
-               //     $display("Fuck You !!!!!!!!!!!!");
+               //     $display("You !!!!!!!!!!!!");
                  //   $finish;
               //  end
 
@@ -321,7 +347,6 @@ module Core (
 			//wb_inp_res <= 0;
 
 		end else begin // !bus.reset
-
             //                $display("... id=%x ... of=%x ...  ex=%x \n",cl_out_nop_id_stat,cl_out_nop_of_stat,cl_out_nop_ex_stat);
             //if(!(cl_out_nop_id_stat) && !(cl_out_nop_of_stat) && !(cl_out_nop_ex_stat)) begin
           //  decode_offset <= decode_offset + { 3'b0, bytes_decoded_this_cycle };

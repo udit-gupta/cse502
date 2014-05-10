@@ -4,6 +4,10 @@ module Core (
 );
 
 
+logic[63:0] block_offset;
+//logic[6:0] offset;
+//wire[0:2*64*8-1] mem_buffer_repeated;
+
 //    enum { fetch_idle, fetch_waiting, fetch_active } fetch_state;
 	logic[63:0] fetch_rip;
 	logic[0:2*64*8-1] decode_buffer; // NOTE: buffer bits are left-to-right in increasing order
@@ -33,7 +37,11 @@ module Core (
 
 //	assign bus.respack = bus.respcyc; // always able to accept response
 
-	always @ (posedge bus.clk)
+    assign block_offset = fetch_rip - ( fetch_rip & ~63 );
+/*    assign offset[6:0]  = block_offset[6:0]; 
+    assign mem_buffer_repeated = { mem_buffer[0 +:64*8], 512'b0 }; 
+    assign fetch_buffer = mem_buffer_repeated[offset*8 +: 512]; 
+*/	always @ (posedge bus.clk)
 		if (bus.reset) begin
 
 			fetch_rip <= entry & ~63;
@@ -46,16 +54,23 @@ module Core (
 		//	bus.req <= fetch_rip & ~63;
 		//	bus.reqtag <= { bus.READ, bus.MEMORY, 8'b0 };
         if(buf_offset2[6:0]==7'b0);
-	
-        if(mem_req_completed) begin
-            
-            buf_offset <= 0;//num_bytes;
-			fetch_rip <= fetch_rip + 64; //{57'b0, num_bytes};
-    decode_buffer[buf_offset*8 +: 64*8]  <= mem_buffer[buf_offset*8 +: 64*8] ;
+        
+        if(block_offset[63:0]==64'b0);
 
-            $display("DDECODEBUFFER: %x",decode_buffer);
+
+        if(mem_req_completed) begin
+             buf_offset <= 0;//num_bytes;
+			 fetch_rip <= fetch_rip + 64;//(64-block_offset); //{57'b0, num_bytes};
+             $display("Block Offset: %x",block_offset);
+             //fetch_buffer <= mem_buffer_repeated[block_offset*8 +: 64*8]; 
+             decode_buffer[buf_offset*8 +: 64*8]  <= mem_buffer[buf_offset*8 +: 64*8] ;
+                
+       //     assign fetch_rip = fetch_rip + block_offset; 
+                $display("DDECODEBUFFER: %x",decode_buffer);
             //fetch_offset <= fetch_offset+8;
-            fetch_offset <= fetch_offset+64;//num_bytes;
+          //  temp[63:0]<=64-block_offset;
+            fetch_offset <= fetch_offset+64;//temp[6:0];//num_bytes;
+           // if(mem_buffer_repeated[0:1023]==1024'b0);
         end
         
         $display("Fetch Rip : %x, num_bytes: %d, buf_offset: %d",fetch_rip,num_bytes,buf_offset);        
@@ -169,10 +184,11 @@ module Core (
    // logic[0:0] end_signal;
 
 
-	logic[0:0] mem_req_completed;
+	logic[0:0] mem_req_completed=1'b0;
 	logic[6:0] num_bytes;
 	//logic[0:2*64*8-1] mem_buffer;
 	logic[0:64*8-1] mem_buffer;
+//	logic[0:64*8-1] fetch_buffer;
 	logic[6:0] buf_offset;
 	logic[6:0] buf_offset2;
     

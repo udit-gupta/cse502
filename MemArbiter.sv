@@ -1,13 +1,13 @@
 module MemArbiter #(DATA_WIDTH = 64, TAG_WIDTH = 1) (
-    /* verilator lint_off UNDRIVEN */ /* verilator lint_off UNUSED */ Sysbus bus, /* verilator lint_on UNUSED */ /* verilator lint_on UNDRIVEN */
-    output logic[6:0] buf_offset,
-    input logic[63:0] fetch_ad,
+    /* verilator lint_off UNDRIVEN */ /* verilator lint_off UNUSED */ Sysbus bus /* verilator lint_on UNUSED */ /* verilator lint_on UNDRIVEN */
+//    output logic[6:0] buf_offset,
+//    input logic[63:0] fetch_ad,
     //output logic[0:2*64*8-1] mem_buffer,
     //output logic[0:2*64*8-1] mem_buffer,
-    output logic[0:64*8-1] mem_buffer,
-    input logic send_fetch_req_in,
-    output logic[0:0] mem_req_completed,
-    output logic[6:0] num_bytes
+//    output logic[0:64*8-1] mem_buffer,
+ //   input logic send_fetch_req_in,
+ //   output logic[0:0] mem_req_completed,
+ //   output logic[6:0] num_bytes
 );
 
 enum { fetch_idle, fetch_waiting, fetch_active } fetch_state;
@@ -16,10 +16,30 @@ enum { fetch_idle, fetch_waiting, fetch_active } fetch_state;
 logic[63:0] fetch_addr;
 logic send_fetch_req;
 
-always_comb begin
-    $display("fetch_addr: %x", fetch_addr);
-    $display("decode_buffer: %x" , mem_buffer);
-    $display("send_fetch_Req_in: %x" , send_fetch_req_in);
+
+logic[6:0] buf_offset;
+logic[63:0] fetch_ad;
+logic[0:64*8-1] mem_buffer;
+logic send_fetch_req_in;
+logic[0:0] mem_req_completed;
+logic[6:0] num_bytes;
+
+
+task load;
+    output logic[6:0] load_buf_offset;
+    input logic[63:0] load_fetch_ad;
+    //output logic[0:2*64*8-1] mem_buffer,
+    //output logic[0:2*64*8-1] mem_buffer,
+    output logic[0:64*8-1] load_mem_buffer;
+    input logic load_send_fetch_req_in;
+    output logic[0:0] load_mem_req_completed;
+    output logic[6:0] load_num_bytes;
+
+begin
+
+    fetch_ad=load_fetch_ad;
+    send_fetch_req_in=load_send_fetch_req_in;
+
     if (fetch_state != fetch_idle) begin
         $display("no fetch");
         send_fetch_req = 0; // hack: in theory, we could try to send another request at this point
@@ -31,7 +51,17 @@ always_comb begin
         send_fetch_req = send_fetch_req_in; 
     end
     $display("send_Fetch_req: %x" , send_fetch_req);
+    $display("fetch_addr: %x", fetch_addr);
+    $display("decode_buffer: %x" , mem_buffer);
+    $display("send_fetch_Req_in: %x" , send_fetch_req_in);
+
+    load_buf_offset=buf_offset;
+    load_mem_buffer=mem_buffer;
+    load_mem_req_completed=mem_req_completed;
+    load_num_bytes=num_bytes;
+    
 end
+endtask
 
 assign bus.respack = bus.respcyc; // always able to accept response
 

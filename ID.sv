@@ -13,6 +13,11 @@ module ID(
 
 // 'State' for the current instruction 
 //logic signed[31:0] displacement;
+
+
+logic[31:0] disp;
+logic[31:0] scale_factor;
+
 logic[15:0] id_requests=16'b0;
 logic[15:0] id_provides=16'b0;
 logic[2:0] dispsize;
@@ -201,7 +206,10 @@ task decode_instr;
 						else begin
 							src_type = MEMORY;
 							src_val[63:0] = { 60'b0, rex_bits[2], rm[2:0] };
-//							$display("Op2:M: %x", src_val[63:0]);
+							$display("DISP[31:24]: %x", disp[31:24]);
+							$display("DISP[23:16]: %x", disp[23:16]);
+							$display("DISP[15:8]: %x", disp[15:8]);
+							$display("DISP[7:0]: %x", disp[7:0]);
 							reg_symbol(opstr[23:0] ,{rex_bits[0],rm[2:0]}, instr_info[14:13],1'b1);
 							mnemonic_stream[255-mptr*8 -: 24] = opstr[23:0];
 							mptr = mptr + 4;
@@ -1451,22 +1459,25 @@ task check_sib;
 	logic[3:0] index;
 	logic[3:0] base;
 	logic[2:0] num_disp_bytes;
-	logic[31:0] disp;
-	logic[31:0] scale_factor;
-	logic[31:0] byte_off;
+//	logic[31:0] disp;
+//	logic[31:0] scale_factor;
+//	logic[31:0] byte_off;
+	logic[3:0] byte_off;
 	logic[15:0] out1;
 
 	begin
-		//$display("check_sib called");
+		$display("check_sib called");
 		inc = 0;
-		byte_off[31:0]={28'b0,inst_byte_offset} + 1;
-		sib = buffer[inst_byte_offset*8 +: 8];
+//		byte_off[31:0]={28'b0,inst_byte_offset} + 1;
+        byte_off=inst_byte_offset;
+        sib = buffer[inst_byte_offset*8 +: 8];
 		//inc = inc + 1;
 
 		scale[1:0] = (1 << sib[7:6]);
 		index[3:0] = {rex_bits[1], sib[5:3]};
 		base[3:0] = {rex_bits[0], sib[2:0]};
-			
+		
+        if(scale[1:0]==2'b0 && index[3:0]==4'b0);
 		 //$display("scale: b%b", scale);
 		 //$display("index: b%b", index);
 		 //$display("base : b%b", base);
@@ -1483,88 +1494,98 @@ task check_sib;
 			toascii(out1,sib);	
 			opcode_stream[359-optr*8 -: 16] = out1;
 			optr = optr + 3;
+        end
+        else begin
+		    scale[1:0] = 2'b0;
+		    index[3:0] = 4'b0;
+		    base[3:0]  = 4'b0;
+        end
 
-			if (modrm[7:6] == 2'b00 ) begin
-				if (index[3:0] == 4'b0100 ) begin
-					if (base[2:0] == 3'b101 ) begin
-						num_disp_bytes[2:0] = 3'b100;
-						//disp[31:0] = buffer[(byte_off+32'b1)*8 +: 32]; 
-						disp[31:0] = buffer[byte_off*8 +: 32]; 
+        $display("MDORM Value: %x",modrm[7:0]);
+        $display("DISPBUFFER Value: %x",buffer[inst_byte_offset*8 +: 64]);
 
-						//$display("disp: %x", disp[31:0]);
+        if (modrm[7:6] == 2'b00 ) begin
+           // if (index[3:0] == 4'b0100 ) begin
+             //   if (base[2:0] == 3'b101 ) begin
+                    num_disp_bytes[2:0] = 3'b100;
+                    //disp[31:0] = buffer[(byte_off+32'b1)*8 +: 32]; 
+                    disp[31:0] = buffer[byte_off*8 +: 32]; 
 
-						scale_factor[31:0] = disp[31:0]; 
-						inc = inc + num_disp_bytes + 1;
-						// $display("1");
-					end
-					else begin
-						num_disp_bytes[2:0] = 3'b000;
-						disp[31:0] = 0; 
-						scale_factor[31:0] = {29'b0,base[2:0]}; 
-						inc = inc + num_disp_bytes + 1;
-						// $display("2");
-					end
-				end
-				else if (base[2:0] == 3'b101 ) begin
-					num_disp_bytes[2:0] = 3'b100;
-					//disp[31:0] = buffer[(byte_off+32'b1)*8 +: 32]; 
-					disp[31:0] = buffer[byte_off*8 +: 32]; 
-					scale_factor[31:0] = (index[2:0] * scale[1:0]) + disp[31:0]; 
-					inc = inc + num_disp_bytes + 1;
-					// $display("3");
-				end
-				else begin
-					num_disp_bytes[2:0] = 3'b000;
-					disp[31:0] = 32'b0; 
-					scale_factor[31:0] = (index[2:0] * scale[1:0]) + {29'b0,base[2:0]}; 
-					inc = inc + num_disp_bytes + 1;
-					// $display("4");
-				end
-			end 
-			else if (modrm[7:6] == 2'b01 ) begin
-				if (index[3:0] == 4'b0100 ) begin
-					num_disp_bytes[2:0] = 3'b001;
-				//disp[31:0] = {24'b0, buffer[(byte_off+32'b1)*8 +: 8]}; 
-					disp[31:0] = {24'b0, buffer[byte_off*8 +: 8]}; 
-					scale_factor[31:0] = disp[31:0] + {29'b0,base[2:0]}; 
-					inc = inc + num_disp_bytes + 1;
-					// $display("5");
-				end
-				else begin
-					num_disp_bytes[2:0] = 3'b001;
-				//disp[31:0] = {24'b0, buffer[(byte_off+32'b1)*8 +: 8]}; 
-					disp[31:0] = {24'b0, buffer[byte_off*8 +: 8]}; 
-					scale_factor[31:0] = disp[31:0] + {29'b0,base[2:0]} +(index[2:0] * scale[1:0]) ; 
-					inc = inc + num_disp_bytes + 1;
-					// $display("6");
-				end
-			end
-			else if (modrm[7:6] == 2'b10 ) begin
-				if (index[3:0] == 4'b0100 ) begin
-					num_disp_bytes[2:0] = 3'b100;
-				//disp[31:0] = buffer[(byte_off+1)*8 +: 32]; 
-					disp[31:0] = buffer[byte_off*8 +: 32]; 
-					scale_factor[31:0] = disp[31:0] + {29'b0,base[2:0]}; 
-					inc = inc + num_disp_bytes + 1 ;
-					// $display("7");
-				end
-				else begin
-					num_disp_bytes[2:0] = 3'b100;
-				//disp[31:0] = buffer[(byte_off+1)*8 +: 32]; 
-					disp[31:0] = buffer[byte_off*8 +: 32]; 
-					scale_factor[31:0] = disp[31:0] + {29'b0,base[2:0]} + (index[2:0] * scale[1:0]) ; 
-					inc = inc + num_disp_bytes + 1;
-					// $display("8");
-				end
-			end 
-			else begin
-				 // $display("9");
-			end
+                    //$display("disp: %x", disp[31:0]);
 
-		end
-		else begin
-			 // $display("No SIB present");
-		end
+                    scale_factor[31:0] = disp[31:0]; 
+                    inc = inc + num_disp_bytes;// + 1;
+                    $display("IB1");
+             //   end
+             /*   else begin
+                    num_disp_bytes[2:0] = 3'b000;
+                    disp[31:0] = 0; 
+                    scale_factor[31:0] = {29'b0,base[2:0]}; 
+                    inc = inc + num_disp_bytes + 1;
+                    $display("IB2");
+                end
+            end
+            else if (base[2:0] == 3'b101 ) begin
+                num_disp_bytes[2:0] = 3'b100;
+                //disp[31:0] = buffer[(byte_off+32'b1)*8 +: 32]; 
+                disp[31:0] = buffer[byte_off*8 +: 32]; 
+                scale_factor[31:0] = (index[2:0] * scale[1:0]) + disp[31:0]; 
+                inc = inc + num_disp_bytes + 1;
+                $display("IB3");
+            end
+            else begin
+                num_disp_bytes[2:0] = 3'b000;
+                disp[31:0] = 32'b0; 
+                scale_factor[31:0] = (index[2:0] * scale[1:0]) + {29'b0,base[2:0]}; 
+                inc = inc + num_disp_bytes + 1;
+                $display("IB4");
+            end*/
+        end 
+        else if (modrm[7:6] == 2'b01 ) begin
+          //  if (index[3:0] == 4'b0100 ) begin
+                num_disp_bytes[2:0] = 3'b001;
+                //disp[31:0] = {24'b0, buffer[(byte_off+32'b1)*8 +: 8]}; 
+                disp[31:0] = {24'b0, buffer[byte_off*8 +: 8]}; 
+                scale_factor[31:0] = disp[31:0] + {29'b0,base[2:0]}; 
+                inc = inc + num_disp_bytes;// + 1;
+                $display("IB5");
+        /*    end
+            else begin
+                num_disp_bytes[2:0] = 3'b001;
+                //disp[31:0] = {24'b0, buffer[(byte_off+32'b1)*8 +: 8]}; 
+                disp[31:0] = {24'b0, buffer[byte_off*8 +: 8]}; 
+                scale_factor[31:0] = disp[31:0] + {29'b0,base[2:0]} +(index[2:0] * scale[1:0]) ; 
+                inc = inc + num_disp_bytes + 1;
+                $display("IB6");
+            end*/
+        end
+        else if (modrm[7:6] == 2'b10 ) begin
+         //   if (index[3:0] == 4'b0100 ) begin
+                num_disp_bytes[2:0] = 3'b100;
+                //disp[31:0] = buffer[(byte_off+1)*8 +: 32]; 
+                disp[31:0] = buffer[byte_off*8 +: 32]; 
+                scale_factor[31:0] = disp[31:0] + {29'b0,base[2:0]}; 
+                inc = inc + num_disp_bytes;// + 1 ;
+                $display("IB7");
+        /*    end
+            else begin
+                num_disp_bytes[2:0] = 3'b100;
+                //disp[31:0] = buffer[(byte_off+1)*8 +: 32]; 
+                disp[31:0] = buffer[byte_off*8 +: 32]; 
+                scale_factor[31:0] = disp[31:0] + {29'b0,base[2:0]} + (index[2:0] * scale[1:0]) ; 
+                inc = inc + num_disp_bytes + 1;
+                $display("IB8");
+            end*/
+        end 
+        else begin
+            $display("IB9");
+        end
+
+//		end
+//		else begin
+
+//			 $display("No SIB present");
+//		end
 
 		if (scale_factor == 0);
 
@@ -1636,6 +1657,7 @@ endtask
 
 
 task decode;
+//	output logic[0:0] curr_comp_flag;
 	output logic[0:0] sig_id_nop; 
 	output logic[15:0] id_out_req;
 	output logic[15:0] id_out_prov;
@@ -1648,6 +1670,7 @@ task decode;
 	output logic[63:0] dest_val;
 	output logic[1:0] src_size;
 	output logic[1:0] dest_size;
+//	input logic[0:0] comp_flag;
 
 
 	logic[3:0] offs;
@@ -1662,14 +1685,20 @@ task decode;
 	inst_field_t next_fld_type;
 
 	begin
-	
+
+  /*      if(buffer[0:119]==120'b0 && comp_flag==1'b1) begin
+            sig_id_nop=1'b1;
+        end
+*/
         sig_id_nop=1'b0;
         if(buffer[0:119]==120'b0) begin
             sig_id_nop=1'b1;
+            //curr_comp_flag=1'b1;
             increment_by=15;
         end
 
         else begin
+            //curr_comp_flag=1'b0;
 		$display("Start ............................................................................");
 
         instr[7:0] = 0;

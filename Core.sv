@@ -1,6 +1,6 @@
 module Core (
-	input[63:0] entry
-,	/* verilator lint_off UNDRIVEN */ /* verilator lint_off UNUSED */ Sysbus bus /* verilator lint_on UNUSED */ /* verilator lint_on UNDRIVEN */
+	input[63:0] entry,
+	/* verilator lint_off UNDRIVEN */ /* verilator lint_off UNUSED */ Sysbus bus /* verilator lint_on UNUSED */ /* verilator lint_on UNDRIVEN */
 );
 
 
@@ -114,6 +114,9 @@ module Core (
 		IMM
 	} operand_t;
 
+//    logic id_curr_comp_flag=1'b0;
+ //   logic id_comp_flag=1'b0;
+
     logic[0:0]  id_out_end=1'b0;
     logic[0:0]  of_in_end=1'b0;
     logic[0:0]  of_out_end=1'b0;
@@ -198,13 +201,14 @@ module Core (
 
 	//Decoder D(bytes_decoded_this_cycle, bus, opcode_stream, mnemonic_stream, current_addr, decode_bytes,op,op2,ModRM,ModRM2);
 
-    MemArbiter Mem(bus,buf_offset2,fetch_rip,mem_buffer,send_fetch_req,mem_req_completed,num_bytes);
+  //  MemArbiter Mem(bus,buf_offset2,fetch_rip,mem_buffer,send_fetch_req,mem_req_completed,num_bytes);l
 	ID id(bytes_decoded_this_cycle, opcode_stream, mnemonic_stream, current_addr, decode_bytes,opcode_str,opcode2_str,ModRM,ModRM2,inst_info);
 	OF of(xreg);
 	EX ex();
 	WB wb();
 
     ControlLogic cl(cl_out_nop_id_stat, cl_out_nop_of_stat, cl_out_nop_ex_stat, cl_out_nop_wb_stat, id_out_request, id_out_provide);
+
 
 	initial begin
 //		xreg[RAX] = 64'h0 ; 
@@ -226,6 +230,14 @@ module Core (
 	end
 
 	always_comb begin
+                Mem.load(
+                    buf_offset2,
+                    fetch_rip,
+                    mem_buffer,
+                    send_fetch_req,
+                    mem_req_completed,
+                    num_bytes
+                );
 		$display("can_decode: %x, decode_offset: %x, fetch_offset: %x", can_decode, decode_offset, fetch_offset);
 		if (can_decode) begin : decode_block
 			// cse502 : Decoder here
@@ -252,6 +264,7 @@ module Core (
               //  end
 
                 id.decode(
+                 //   id_curr_comp_flag,
                     id_out_end,
                     id_out_request,
                     id_out_provide,
@@ -264,6 +277,7 @@ module Core (
 					id_out_dest_vl,
 					id_out_src_sz,
 					id_out_dest_sz
+               //     id_comp_flag 
 				);
 
 
@@ -341,6 +355,7 @@ module Core (
 			xreg[R15] <= 64'h0 ; 
 */
 
+  //          id_comp_flag <= 0;
 
 			of_inp_current_addr <= 0;
 			of_inp_opr <= 0;
@@ -363,6 +378,7 @@ module Core (
 			//wb_inp_res <= 0;
 
 		end else begin // !bus.reset
+//            id_comp_flag <= id_curr_comp_flag;
             //                $display("... id=%x ... of=%x ...  ex=%x \n",cl_out_nop_id_stat,cl_out_nop_of_stat,cl_out_nop_ex_stat);
             //if(!(cl_out_nop_id_stat) && !(cl_out_nop_of_stat) && !(cl_out_nop_ex_stat)) begin
           //  decode_offset <= decode_offset + { 3'b0, bytes_decoded_this_cycle };

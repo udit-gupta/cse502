@@ -1663,7 +1663,7 @@ task decode;
 	output logic[15:0] id_out_prov;
 	output logic[3:0] increment_by;
 	output logic[7:0] operation; 
-	output logic[1:0] num_op;
+	output logic[1:0] numop;
 	output operand_t src_type;
 	output operand_t dest_type;
 	output logic[63:0] src_val;
@@ -1686,13 +1686,10 @@ task decode;
 
 	begin
 
-  /*      if(buffer[0:119]==120'b0 && comp_flag==1'b1) begin
-            sig_id_nop=1'b1;
-        end
-*/
-        sig_id_nop=1'b0;
-        if(buffer[0:119]==120'b0) begin
-            sig_id_nop=1'b1;
+       sig_id_nop=1'b0;
+
+       if(buffer[0:119]==120'b0) begin
+        //    sig_id_nop=1'b1;
             //curr_comp_flag=1'b1;
             increment_by=15;
         end
@@ -1757,7 +1754,7 @@ task decode;
 		offs8 = offs7;
 		if (num_inst_bytes == 2'b01) begin
 		//	$display("One byte instr");
-			decode_instr(offs8, num_op, src_type, dest_type, src_val, dest_val, src_size, dest_size, offs7);
+			decode_instr(offs8, numop, src_type, dest_type, src_val, dest_val, src_size, dest_size, offs7);
 			// $display("increment by decode_instr : %d",offs8);
 		end
 //		else
@@ -1770,8 +1767,11 @@ task decode;
 	    $display("increment by %d and offs8 is %d ",increment_by,offs8);
 		byte_incr = increment_by;
 		operation[7:0] = instr[7:0];
-		$display("%x: %s %s", current_addr[63:0], opcode_stream[359:0],mnemonic_stream[255:0]); 
-//		$display("END ............................................................................");
+       // if(operation[7:0]==8'hc3) begin
+         //   $finish;
+       // end
+      //  $finish;
+        //		$display("END ...........................................................i.................");
 		// To suppress errors
 		if (mnemonic_stream == 0);
 		if (opcode_stream[359:0] == 0);
@@ -1784,7 +1784,28 @@ task decode;
 
         id_out_req=id_requests;
         id_out_prov=id_provides;
-   
+  
+       if(operation[7:0]==8'hc3) begin
+           $display("OPeration[7:0] : %d",operation[7:0]);
+            sig_id_nop=1'b1;
+            opcode_stream[359:0]=360'b0;
+            mnemonic_stream[255:0]=256'b0;
+            id_out_req[15:0]=16'b0;
+            id_out_prov[15:0]=16'b0;
+            increment_by=4'b0;
+            operation[7:0]=8'b0; 
+            numop=2'b0;
+            src_type=0;
+            dest_type=0;
+            src_val=64'b0;
+            dest_val=64'b0;
+            src_size=2'b0;
+            dest_size=2'b0;
+       end
+
+		$display("%x: %s %s", current_addr[63:0], opcode_stream[359:0],mnemonic_stream[255:0]); 
+
+
        // $display("Byte Incr: %d",byte_incr);
 
         end

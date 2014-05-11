@@ -4,9 +4,9 @@ module Core (
 );
 
 
-logic[63:0] block_offset;
-//logic[6:0] offset;
-//wire[0:2*64*8-1] mem_buffer_repeated;
+//logic[63:0] block_offset;
+//logic[6:0] offset;  ///
+//wire[0:2*64*8-1] mem_buffer_repeated; ///
 
 //    enum { fetch_idle, fetch_waiting, fetch_active } fetch_state;
 	logic[63:0] fetch_rip;
@@ -37,11 +37,11 @@ logic[63:0] block_offset;
 
 //	assign bus.respack = bus.respcyc; // always able to accept response
 
-    assign block_offset = fetch_rip - ( fetch_rip & ~63 );
-/*    assign offset[6:0]  = block_offset[6:0]; 
-    assign mem_buffer_repeated = { mem_buffer[0 +:64*8], 512'b0 }; 
-    assign fetch_buffer = mem_buffer_repeated[offset*8 +: 512]; 
-*/	always @ (posedge bus.clk)
+  //  assign block_offset = fetch_rip - ( fetch_rip & ~63 );
+  //  assign offset[6:0]  = block_offset[6:0]; ///
+ //   assign mem_buffer_repeated = { mem_buffer[0 +:64*8], 512'b0 }; ///
+ //   assign fetch_buffer = mem_buffer_repeated[0*8 +: 512]; ///
+	always @ (posedge bus.clk)
 		if (bus.reset) begin
 
 			fetch_rip <= entry & ~63;
@@ -55,22 +55,22 @@ logic[63:0] block_offset;
 		//	bus.reqtag <= { bus.READ, bus.MEMORY, 8'b0 };
         if(buf_offset2[6:0]==7'b0);
         
-        if(block_offset[63:0]==64'b0);
+      //  if(block_offset[63:0]==64'b0);
 
 
         if(mem_req_completed) begin
              buf_offset <= 0;//num_bytes;
 			 fetch_rip <= fetch_rip + 64;//(64-block_offset); //{57'b0, num_bytes};
-             $display("Block Offset: %x",block_offset);
-             //fetch_buffer <= mem_buffer_repeated[block_offset*8 +: 64*8]; 
-             decode_buffer[buf_offset*8 +: 64*8]  <= mem_buffer[buf_offset*8 +: 64*8] ;
+        //     $display("Block Offset: %x",block_offset);
+           //  fetch_buffer <= mem_buffer_repeated[offset*8 +: 64*8]; 
+             decode_buffer[0 +: 64*8]  <= mem_buffer;
                 
        //     assign fetch_rip = fetch_rip + block_offset; 
                 $display("DDECODEBUFFER: %x",decode_buffer);
             //fetch_offset <= fetch_offset+8;
           //  temp[63:0]<=64-block_offset;
             fetch_offset <= fetch_offset+64;//temp[6:0];//num_bytes;
-           // if(mem_buffer_repeated[0:1023]==1024'b0);
+        //    if(mem_buffer_repeated[0:1023]==1024'b0);
         end
         
         $display("Fetch Rip : %x, num_bytes: %d, buf_offset: %d",fetch_rip,num_bytes,buf_offset);        
@@ -188,7 +188,7 @@ logic[63:0] block_offset;
 	logic[6:0] num_bytes;
 	//logic[0:2*64*8-1] mem_buffer;
 	logic[0:64*8-1] mem_buffer;
-//	logic[0:64*8-1] fetch_buffer;
+//	logic[0:64*8-1] fetch_buffer;   ////
 	logic[6:0] buf_offset;
 	logic[6:0] buf_offset2;
     
@@ -371,7 +371,7 @@ logic[63:0] block_offset;
          if(!(cl_out_nop_id_stat) && !(cl_out_nop_of_stat) && !(cl_out_nop_ex_stat) && !(cl_out_nop_wb_stat)) begin
 
           //  $display("ID Passed !!!!!!");
-            //          $display("bytes_decoded_this_cycle: %d\n",bytes_decoded_this_cycle);
+                      $display("bytes_decoded_this_cycle: %d\n",bytes_decoded_this_cycle);
 			    // IDOF pipeline registers
 
                 decode_offset <= decode_offset + { 3'b0, bytes_decoded_this_cycle };

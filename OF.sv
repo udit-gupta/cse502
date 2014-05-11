@@ -50,10 +50,12 @@ task operand_fetch;
 				oper2[7:0] = regx[opsrcval[3:0]][7:0];
 			end 
 			else if (opsrcty == MEMORY) begin
+			$display("Memory %x", opsrcval[7:0]);
 			end
 			else begin
 				oper2[7:0] = opsrcval[7:0];
 			end
+            $display("disco11111");
 	//		$display("OF: Operands %x %x", oper1[7:0], oper2[7:0]);
 		end
 		2'b01: begin
@@ -62,12 +64,14 @@ task operand_fetch;
 				oper2[15:0] = regx[opsrcval[3:0]][15:0];
 			end 
 			else if (opsrcty == MEMORY) begin
+				oper2[15:0] = regx[opsrcval[3:0]][15:0];
 				oper2[63:0] = opsrcval[63:0];
-				$display("OF2: MEM: Operands %x %x", oper1[63:0], oper2[63:0]);
+				$display("1OF2: MEM: Operands %x %x", oper1[63:0], oper2[63:0]);
 			end
 			else begin
 				oper2[15:0] = opsrcval[15:0];
 			end
+            $display("disco22222");
 	//		$display("OF: Operands %x %x", oper1[7:0], oper2[7:0]);
 		end
 		2'b10: begin 
@@ -77,11 +81,12 @@ task operand_fetch;
 			end 
 			else if (opsrcty == MEMORY) begin
 				oper2[63:0] = opsrcval[63:0];
-		//		$display("OF2: MEM: Operands %x %x", oper1[63:0], oper2[63:0]);
+			$display("2OF2: MEM: Operands %x %x", oper1[63:0], oper2[63:0]);
 			end
 			else begin
 				oper2[31:0] = opsrcval[31:0];
 			end
+            $display("disco33333");
 		//	$display("OF: Operands %x %x", oper1[7:0], oper2[7:0]);
 		end
 		2'b11: begin
@@ -92,12 +97,13 @@ task operand_fetch;
 			end 
 			else if (opsrcty == MEMORY) begin
 				oper2[63:0] = opsrcval[63:0];
-				//$display("OF2: MEM: Operands %x %x", oper1[63:0], oper2[63:0]);
+				$display("3OF2: MEM: Operands %x %x", oper1[63:0], oper2[63:0]);
 			end
 			else begin
 				oper2[63:0] = opsrcval[63:0];
 		//		$display("OF2: Operands %x %x", oper1[63:0], oper2[63:0]);
 			end
+            $display("disco44444");
 		end
 		default:;
 	endcase

@@ -48,8 +48,8 @@ uint64_t System::load_elf(const char* filename) {
 			memset(ram+p->p_vaddr,0,p->p_memsz);
 			assert(lseek(fd,p->p_offset,SEEK_SET)!=-1);
 			assert(read(fd,(void*)(ram+p->p_vaddr),p->p_filesz)==p->p_filesz);
-			if (max_elf_addr < ((uint64_t)(ram+p->p_vaddr)+p->p_filesz)) {
-				max_elf_addr = ((uint64_t)(ram+p->p_vaddr)+p->p_filesz);
+			if (max_elf_addr < (p->p_vaddr+p->p_filesz)) {
+				max_elf_addr = (p->p_vaddr+p->p_filesz);
 			}
 			//cerr << "section flags " << hex << p->p_flags << endl;
 		} else if (p->p_type == PT_GNU_STACK) {
@@ -241,7 +241,9 @@ long long syscall_cse502(long long rax, long long rdi, long long rsi, long long 
 		}
 		return global_ram_brkptr;
 	case __NR_clock_gettime:
-		return __syscall2(rax, rdi, (uint64_t)(global_ram+rsi));
+		*(uint64_t *)(global_ram+rsi) = main_time/ps_per_clock;
+		return main_time/ps_per_clock;
+		// return __syscall2(rax, rdi, (uint64_t)(global_ram+rsi));
 	default:
 		assert(0);	// no other syscall is implemented.
 	}

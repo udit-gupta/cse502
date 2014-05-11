@@ -960,9 +960,9 @@ endtask
 
 
 task check_legacy_prefix;
-	output logic[3:0] next_byte_offset;
+    output logic[3:0] next_byte_offset;
 	output inst_field_t next_field_type;
-	input logic[3:0] inst_byte_offset;
+    input logic[3:0] inst_byte_offset;
 	logic[3:0] inc;
 
 	begin
@@ -1666,6 +1666,7 @@ task decode;
         sig_id_nop=1'b0;
         if(buffer[0:119]==120'b0) begin
             sig_id_nop=1'b1;
+            increment_by=15;
         end
 
         else begin
@@ -1678,7 +1679,19 @@ task decode;
 		mptr[7:0] = 8'b0;
 		next_fld_type = LEGACY_PREFIX;
 		offs = 0;
-		offs2 = offs;
+
+		for (int j = 0 ; j < 15 ; j++) begin
+            if(buffer[offs*8 +: 8]==8'b0) begin
+                offs=offs+1;
+            end
+		end
+
+//        increment_by=offs;
+
+        $display("buffer is: %x",buffer[0:119]);
+        $display("OFFS: %x",offs);
+
+        offs2 = offs;
 		if ((next_fld_type & LEGACY_PREFIX) == LEGACY_PREFIX ) begin
 			check_legacy_prefix(offs2,next_fld_type,offs);
 		end
@@ -1721,8 +1734,11 @@ task decode;
 //		else
 //			decode_instr2(offs8,offs7);
 		// TODO: handle two byte opcodes
-        
+
+
+
 		increment_by = offs8;
+	    $display("increment by %d and offs8 is %d ",increment_by,offs8);
 		byte_incr = increment_by;
 		operation[7:0] = instr[7:0];
 		$display("%x: %s %s", current_addr[63:0], opcode_stream[359:0],mnemonic_stream[255:0]); 

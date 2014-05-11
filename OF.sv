@@ -29,10 +29,10 @@ task operand_fetch;
 
 
     
-//	$display("Opdestval : %x ", opdestval[63:0]);
-//	$display("Opsrcval : %x ", opsrcval[63:0]);
-//	$display("Opsrcty : %x ", opsrcty[31:0]);
-//	$display("Opdestty : %x ", opdestty[31:0]);
+	$display("CURR_ADDR : %x ", oper_curr[63:0]);
+	$display("Opsrcval : %x ", opsrcval[63:0]);
+	$display("Opsrcty : %x ", opsrcty[31:0]);
+	$display("Opdestty : %x ", opdestty[31:0]);
     if(sig_of_in_nop==1'b1) begin
         sig_of_nop=1'b1;
     end

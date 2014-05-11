@@ -46,8 +46,8 @@ always @ (posedge bus.clk) begin
     end else begin // !bus.reset
 
         if (fetch_state == fetch_idle) begin
-            //fetch_addr <= fetch_ad;
-            fetch_addr <= fetch_addr;
+            fetch_addr <= fetch_ad;
+//            fetch_addr <= fetch_addr;
             bus.reqcyc <= send_fetch_req;
             bus.reqtag <= { bus.READ, bus.MEMORY, 8'b0 };
             //bus.req <= fetch_addr;// & ~63;

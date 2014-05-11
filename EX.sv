@@ -14,10 +14,10 @@ task alu;
 
 begin
 
-        if(sig_ex_in_nop==1'b1) begin
+        if(sig_ex_in_nop==1'b1) ;begin
             sig_ex_nop=sig_ex_in_nop;
         end
-        else begin
+        //else begin
 
 		case (oper[7:0])
 			// ADD instruction
@@ -149,9 +149,9 @@ begin
 			end
 		endcase
 			out_dest_reg[3:0] = in_dest_reg[3:0];
-		//	$display("EX: op1=%x op2=%x res=%x destreg=%x inst=%x", op1[63:0], op2[63:0], res[63:0],out_dest_reg[3:0],oper[7:0]);
+			$display("EX: op1=%x op2=%x res=%x destreg=%x inst=%x", op1[63:0], op2[63:0], res[63:0],out_dest_reg[3:0],oper[7:0]);
 
-        end
+    //    end
     
     end
 endtask

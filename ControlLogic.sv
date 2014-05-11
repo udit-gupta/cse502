@@ -44,15 +44,15 @@ module ControlLogic (
         
         wb_stat=16'b0;
 
-//        $display("id_stat:%x ,of_stat:%x ,ex_stat:%x ,wb_stat:%x ",id_stat,of_stat,ex_stat,wb_stat);
-//        $display("id_out_req:%b ",id_out_req);
-//        $display("id_out_prov:%b ",id_out_prov);
-//        $display("of_out_req:%b ",of_out_req);
-//        $display("of_out_prov:%b ",of_out_prov);
-//        $display("ex_out_req:%b ",ex_out_req);
-//        $display("ex_out_prov:%b ",ex_out_prov);
-//        $display("wb_out_req:%b ",wb_out_req);
-//        $display("wb_out_prov:%b ",wb_out_prov);
+        $display("id_stat:%x ,of_stat:%x ,ex_stat:%x ,wb_stat:%x ",id_stat,of_stat,ex_stat,wb_stat);
+        $display("id_out_req:%b ",id_out_req);
+        $display("id_out_prov:%b ",id_out_prov);
+        $display("of_out_req:%b ",of_out_req);
+        $display("of_out_prov:%b ",of_out_prov);
+        $display("ex_out_req:%b ",ex_out_req);
+        $display("ex_out_prov:%b ",ex_out_prov);
+        $display("wb_out_req:%b ",wb_out_req);
+        $display("wb_out_prov:%b ",wb_out_prov);
 //        
 
 

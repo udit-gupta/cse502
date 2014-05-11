@@ -123,7 +123,7 @@ module Core (
     logic[0:0]  ex_in_end=1'b0;
     logic[0:0]  ex_out_end=1'b0;
     logic[0:0]  wb_in_end=1'b0;
-  //  logic[0:0]  wb_out_end=1'b0;
+    logic[0:0]  wb_out_end=1'b0;
     logic[0:0]  cl_out_nop_id_stat;
     logic[0:0]  cl_out_nop_of_stat;
     logic[0:0]  cl_out_nop_ex_stat;
@@ -184,7 +184,7 @@ module Core (
 	logic[23:0] inst_info[256];
 	//logic[63:0] opr1;
 	//logic[63:0] opr2;
-   // logic[0:0] end_signal;
+    logic[0:0] end_signal;
 
 
 	logic[0:0] mem_req_completed=1'b0;
@@ -258,10 +258,30 @@ module Core (
             end */
   //          else begin  
                 
-              //  if(end_signal==1'b1) begin
-               //     $display("You !!!!!!!!!!!!");
-                 //   $finish;
-              //  end
+                if(end_signal==1'b1) begin
+           $display("RAX = %x", xreg[RAX]);
+		$display("RBX = %x", xreg[RBX]);
+		$display("RCX = %x", xreg[RCX]);
+		$display("RDX = %x", xreg[RDX]);
+		$display("RSI = %x", xreg[RSI]);
+		$display("RDI = %x", xreg[RDI]);
+		$display("RBP = %x", xreg[RBP]);
+		$display("RSP = %x", xreg[RSP]);
+		$display("R8 = %x", xreg[R8]);
+		$display("R9 = %x", xreg[R9]);
+		$display("R10 = %x", xreg[R10]);
+		$display("R11 = %x", xreg[R11]);
+		$display("R12 = %x", xreg[R12]);
+		$display("R13 = %x", xreg[R13]);
+		$display("R14 = %x", xreg[R14]);
+		$display("R15 = %x", xreg[R15]);
+		$display("Endian Check %x", 32'h12345678);
+ 
+                    
+                    
+                    $display("You !!!!!!!!!!!!");
+                    $finish;
+                end
 
                 id.decode(
                  //   id_curr_comp_flag,
@@ -304,7 +324,7 @@ module Core (
 			ex.alu(ex_out_end,ex_out_dest_reg,ex_out_res,ex_inp_opr,ex_inp_opd1,ex_inp_opd2,ex_inp_dest_reg,ex_in_end);
 		
 			//wb.write_back(wb_out_end,wb_regx,wb_inp_dest_reg,wb_inp_res,wb_in_end);
-			wb.write_back(wb_regx,wb_inp_dest_reg,wb_inp_res,wb_in_end);
+			wb.write_back(wb_out_end,wb_regx,wb_inp_dest_reg,wb_inp_res,wb_in_end);
         
 	//		$display("Decod Working !!!!!!!!!!1"); 
 	//		$display("bytes_decoded_this_cycle : %d", bytes_decoded_this_cycle); 
@@ -428,7 +448,7 @@ module Core (
 			    wb_inp_res <= ex_out_res;
         
                 wb_in_end<= ex_out_end;
-//                end_signal<=wb_out_end;    
+                end_signal<=wb_out_end;    
                 xreg <= wb_regx;
             end
 			    // EXWB pipeline registers
@@ -452,24 +472,8 @@ module Core (
 			    xreg[R14] <=  xreg[R14]; 
 			    xreg[R15] <=  xreg[R15]; 
 			    xreg[ex_out_dest_reg[3:0]] <= ex_out_res;*/
-    //        end
-//			$display("RAX = %x", xreg[RAX]);
-//			$display("RBX = %x", xreg[RBX]);
-//			$display("RCX = %x", xreg[RCX]);
-//			$display("RDX = %x", xreg[RDX]);
-//			$display("RSI = %x", xreg[RSI]);
-//			$display("RDI = %x", xreg[RDI]);
-//			$display("RBP = %x", xreg[RBP]);
-//			$display("RSP = %x", xreg[RSP]);
-//			$display("R8 = %x", xreg[R8]);
-//			$display("R9 = %x", xreg[R9]);
-//			$display("R10 = %x", xreg[R10]);
-//			$display("R11 = %x", xreg[R11]);
-//			$display("R12 = %x", xreg[R12]);
-//			$display("R13 = %x", xreg[R13]);
-//			$display("R14 = %x", xreg[R14]);
-//			$display("R15 = %x", xreg[R15]);
-			//$display("WB: dstreg=%x val=%x",ex_out_res[3:0], xreg[ex_out_dest_reg[3:0]][63:0]); 
+       end
+            //$display("WB: dstreg=%x val=%x",ex_out_res[3:0], xreg[ex_out_dest_reg[3:0]][63:0]); 
 
 //			$display("Buffer =>: 0x%x", decode_bytes);
 //			$display("Offset after: %x", decode_offset);
@@ -478,11 +482,11 @@ module Core (
 			//$display("%x: %s %s", current_addr[63:0], opcode_stream[359:0],mnemonic_stream[255:0]); 
 			//$display("ALU Result: %b", alu_res);
 
-		end
+//		end
 
 	// cse502 : Use the following as a guide to print the Register File contents.
 	final begin
-		$display("RAX = %x", xreg[RAX]);
+        $display("RAX = %x", xreg[RAX]);
 		$display("RBX = %x", xreg[RBX]);
 		$display("RCX = %x", xreg[RCX]);
 		$display("RDX = %x", xreg[RDX]);
@@ -499,5 +503,5 @@ module Core (
 		$display("R14 = %x", xreg[R14]);
 		$display("R15 = %x", xreg[R15]);
 		$display("Endian Check %x", 32'h12345678);
-	end
+    end
 endmodule

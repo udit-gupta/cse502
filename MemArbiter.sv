@@ -1,14 +1,8 @@
 module MemArbiter #(DATA_WIDTH = 64, TAG_WIDTH = 1) (
-    /* verilator lint_off UNDRIVEN */ /* verilator lint_off UNUSED */ Sysbus bus /* verilator lint_on UNUSED */ /* verilator lint_on UNDRIVEN */
-//    output logic[6:0] buf_offset,
-//    input logic[63:0] fetch_ad,
-    //output logic[0:2*64*8-1] mem_buffer,
-    //output logic[0:2*64*8-1] mem_buffer,
-//    output logic[0:64*8-1] mem_buffer,
- //   input logic send_fetch_req_in,
- //   output logic[0:0] mem_req_completed,
- //   output logic[6:0] num_bytes
+    /* verilator lint_off UNDRIVEN */ /* verilator lint_off UNUSED */ Sysbus bus, /* verilator lint_on UNUSED */ /* verilator lint_on UNDRIVEN */
+    /* verilator lint_off UNDRIVEN */ /* verilator lint_off UNUSED */ MemRequest lreq /* verilator lint_on UNUSED */ /* verilator lint_on UNDRIVEN */
 );
+
 
 enum { fetch_idle, fetch_waiting, fetch_active } fetch_state;
 //logic[5:0] fetch_skip;
@@ -26,19 +20,17 @@ logic[6:0] num_bytes;
 
 
 task load;
-    output logic[6:0] load_buf_offset;
-    input logic[63:0] load_fetch_ad;
-    //output logic[0:2*64*8-1] mem_buffer,
-    //output logic[0:2*64*8-1] mem_buffer,
-    output logic[0:64*8-1] load_mem_buffer;
-    input logic load_send_fetch_req_in;
-    output logic[0:0] load_mem_req_completed;
-    output logic[6:0] load_num_bytes;
+//    output logic[6:0] load_buf_offset;
+//    input logic[63:0] load_fetch_ad;
+//    output logic[0:64*8-1] load_mem_buffer;
+//    input logic load_send_fetch_req_in;
+//    output logic[0:0] load_mem_req_completed;
+//    output logic[6:0] load_num_bytes;
 
 begin
 
-    fetch_ad=load_fetch_ad;
-    send_fetch_req_in=load_send_fetch_req_in;
+    fetch_ad[63:0] = lreq.load_fetch_ad[63:0];
+    send_fetch_req_in  = lreq.load_send_fetch_req_in;
 
     if (fetch_state != fetch_idle) begin
         $display("no fetch");
@@ -55,10 +47,11 @@ begin
     $display("decode_buffer: %x" , mem_buffer);
     $display("send_fetch_Req_in: %x" , send_fetch_req_in);
 
-    load_buf_offset=buf_offset;
-    load_mem_buffer=mem_buffer;
-    load_mem_req_completed=mem_req_completed;
-    load_num_bytes=num_bytes;
+	// Set the outputs for the module
+	lreq.load_buf_offset[6:0] = buf_offset[6:0];
+	lreq.load_mem_buffer[0:64*8-1] = mem_buffer[0:64*8-1];
+	lreq.load_mem_req_completed[0:0] = mem_req_completed[0:0];
+	lreq.load_num_bytes = num_bytes;
     
 end
 endtask

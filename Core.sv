@@ -1,6 +1,7 @@
 module Core (
 	input[63:0] entry,
-	/* verilator lint_off UNDRIVEN */ /* verilator lint_off UNUSED */ Sysbus bus /* verilator lint_on UNUSED */ /* verilator lint_on UNDRIVEN */
+	/* verilator lint_off UNDRIVEN */ /* verilator lint_off UNUSED */ Sysbus bus, /* verilator lint_on UNUSED */ /* verilator lint_on UNDRIVEN */
+	/* verilator lint_off UNDRIVEN */ /* verilator lint_off UNUSED */ MemRequest mem_load_req /* verilator lint_on UNUSED */ /* verilator lint_on UNDRIVEN */
 );
 
 
@@ -194,6 +195,7 @@ module Core (
 //	logic[0:64*8-1] fetch_buffer;   ////
 	logic[6:0] buf_offset;
 	logic[6:0] buf_offset2;
+
     
 	Opcodes opc(opcode_str,ModRM);
 	Opcodes2 opc2(opcode2_str,ModRM2);
@@ -230,14 +232,23 @@ module Core (
 	end
 
 	always_comb begin
-                Mem.load(
-                    buf_offset2,
-                    fetch_rip,
-                    mem_buffer,
-                    send_fetch_req,
-                    mem_req_completed,
-                    num_bytes
-                );
+//                Mem.load(
+//                    buf_offset2,
+//                    fetch_rip,
+//                    mem_buffer,
+//                    send_fetch_req,
+//                    mem_req_completed,
+//                    num_bytes
+//                );
+		mem_load_req.load_fetch_ad[63:0] = fetch_rip;
+		mem_load_req.load_send_fetch_req_in = send_fetch_req;
+		Mem.load();
+		buf_offset2[6:0] = mem_load_req.load_buf_offset[6:0];
+		mem_buffer[0:64*8-1] = mem_load_req.load_mem_buffer[0:64*8-1];
+		mem_req_completed[0:0] = mem_load_req.load_mem_req_completed[0:0];
+		num_bytes[6:0] = mem_load_req.load_num_bytes[6:0];
+
+
 		$display("can_decode: %x, decode_offset: %x, fetch_offset: %x", can_decode, decode_offset, fetch_offset);
 		if (can_decode) begin : decode_block
 			// cse502 : Decoder here

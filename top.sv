@@ -1,3 +1,4 @@
+
 module top #(DATA_WIDTH = 64, TAG_WIDTH = 13) (
 	input[63:0] entry
 ,	input reset
@@ -11,13 +12,16 @@ module top #(DATA_WIDTH = 64, TAG_WIDTH = 13) (
 ,	input reqack
 ,	output respack
 );
+
+
 	/* verilator lint_off UNDRIVEN */
 	/* verilator lint_off UNUSED */
 	Sysbus #(DATA_WIDTH, TAG_WIDTH) uncore_bus(reset, clk);
 	SysbusBottom #(DATA_WIDTH, TAG_WIDTH) dummy(uncore_bus.Bottom, req, reqtag, resp, resptag, reqcyc, respcyc, reqack, respack);
-    MemArbiter Mem(uncore_bus.Top);
-    Cache l1(uncore_bus.Top);
-    Core core(entry, uncore_bus.Top);
+	MemRequest #(DATA_WIDTH, TAG_WIDTH) mreq(reset, clk);
+    MemArbiter Mem(uncore_bus.Top,mreq.Server);
+    //Cache l1(uncore_bus.Top);
+    Core core(entry, uncore_bus.Top,mreq.Client);
 	/* verilator lint_on UNUSED */
 	/* verilator lint_on UNDRIVEN */
 
